@@ -1,5 +1,12 @@
 #include <ntifs.h>
+#include "SimpleHypervisor.h"
 
+void* __cdecl operator new(unsigned __int64 size)
+{
+	PHYSICAL_ADDRESS highest;
+	highest.QuadPart = 0xFFFFFFFFFFFFFFFF;
+	return MmAllocateContiguousMemory(size, highest);
+}
 
 EXTERN_C
 NTKERNELAPI
@@ -41,6 +48,9 @@ VOID VTLoadProc(
 {
 	DbgPrintEx(77, 0, "Debug:CPU Number:------>: %d\r\n", KeGetCurrentProcessorNumber());
 
+	SimpleHypervisor* VT = new SimpleHypervisor(); // beware leak
+	VT->Install();
+
 	KeSignalCallDpcSynchronize(SystemArgument2);
 	KeSignalCallDpcDone(SystemArgument1);
 }
@@ -56,7 +66,7 @@ EXTERN_C
 #endif // __cplusplus
 VOID VTUnload(PDRIVER_OBJECT DriverObject)
 {
-	DbgPrintEx(77, 0, "VTUnload\r\n");
+	DbgPrintEx(77, 0, "Debug:VTUnload\r\n");
 }
 
 #ifdef __cplusplus
@@ -68,7 +78,7 @@ EXTERN_C
 	DriverObject->DriverUnload = VTUnload;
 	VTLoad();
 
-	DbgPrintEx(77,0,"VTLoad\r\n");
+	DbgPrintEx(77,0,"Debug:VTLoad\r\n");
 
 
 	return STATUS_SUCCESS;

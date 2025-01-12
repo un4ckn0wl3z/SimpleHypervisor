@@ -95,6 +95,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DriverEntry.cpp" />
+    <ClCompile Include="SimpleHypervisor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SimpleHypervisor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
