@@ -214,8 +214,6 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	m_GuestState.msr_sysenter_eip = __readmsr(IA32_SYSENTER_EIP);
 	m_GuestState.msr_sysenter_esp = __readmsr(IA32_SYSENTER_ESP);
 
-
-
 	
 
 
