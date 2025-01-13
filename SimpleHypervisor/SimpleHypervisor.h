@@ -122,6 +122,37 @@ typedef struct _HOST_STATE {
 } HOST_STATE, * PHOST_STATE;
 //---------------------------------------
 
+typedef struct _GUEST_STATE {
+	ULONG_PTR cs;
+	ULONG_PTR ds;
+	ULONG_PTR ss;
+	ULONG_PTR es;
+	ULONG_PTR fs;
+	ULONG_PTR gs;
+	GDT gdt;
+	IDT idt;
+	ULONG_PTR ldtr;
+	ULONG_PTR tr;
+	ULONG_PTR rsp;
+	ULONG_PTR rip;
+	ULONG_PTR rflags;
+	ULONG_PTR cr0;
+	ULONG_PTR cr4;
+	ULONG_PTR cr3;
+	ULONG_PTR dr7;
+	ULONG_PTR msr_debugctl;
+	ULONG_PTR msr_sysenter_cs;
+	ULONG_PTR msr_sysenter_eip;
+	ULONG_PTR msr_sysenter_esp;
+
+	ULONG_PTR msr_perf_global_ctrl;
+	ULONG_PTR msr_pat;
+	ULONG_PTR msr_efer;
+	ULONG_PTR msr_bndcfgs;
+} GUEST_STATE, * PGUEST_STATE;
+
+//---------------------------------------
+
 class SimpleHypervisor
 {
 public:
@@ -160,6 +191,7 @@ private:
 	BOOLEAN m_VMXOn;
 
 	HOST_STATE m_HostState;
+	GUEST_STATE m_GuestState;
 
 	ULONG_PTR m_VMXRegionPhysAddr;
 	ULONG_PTR m_VMCSRegionPhysAddr;
@@ -167,6 +199,9 @@ private:
 
 	ULONG_PTR StackPointer;
 	ULONG_PTR ReturnAddress;
+
+	ULONG_PTR m_VmxBasic;
+	ULONG_PTR m_VmxFeatureControl;
 
 
 };

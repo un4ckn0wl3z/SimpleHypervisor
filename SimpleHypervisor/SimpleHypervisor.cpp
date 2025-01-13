@@ -173,5 +173,52 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 		0, "Debug:[CPU:%d] -- [MsrBitmap] --- VA: %016llX! ------ phy: %016llX!\r\n", m_CPU, m_MsrBitmapRegion, m_MsrBitmapRegionPhysAddr);
 
 
+
+	// Check features
+	m_VmxBasic = __readmsr(IA32_VMX_BASIC_MSR_CODE);
+	m_VmxFeatureControl = __readmsr(IA32_FEATURE_CONTROL_CODE);
+
+	// Fill in version number
+
+	*(PULONG32)m_VMXRegion = (ULONG32)m_VmxBasic;
+	*(PULONG32)m_VMCSRegion = (ULONG32)m_VmxBasic;
+
+	// Enable VMX Config
+
+	m_GuestState.cs = __readcs();
+	m_GuestState.ds = __readds();
+	m_GuestState.ss = __readss();
+	m_GuestState.es = __reades();
+	m_GuestState.fs = __readfs();
+	m_GuestState.gs = __readgs();
+
+	m_GuestState.ldtr = __sldt();
+	m_GuestState.tr = __str();
+	m_GuestState.rflags = __readeflags();
+
+	m_GuestState.rip = ReturnAddress;
+	m_GuestState.rsp = StackPointer;
+
+	__sgdt(&(m_GuestState.gdt));
+
+	__sidt(&(m_GuestState.idt));
+
+	m_GuestState.cr3 = __readcr3();
+	m_GuestState.cr0 = ((__readcr0() & __readmsr(IA32_VMX_CR0_FIXED1)) | __readmsr(IA32_VMX_CR0_FIXED0));
+
+	m_GuestState.cr4 = ((__readcr4() & __readmsr(IA32_VMX_CR4_FIXED1)) | __readmsr(IA32_VMX_CR4_FIXED0));
+	m_GuestState.dr7 = __readdr(7);
+
+	m_GuestState.msr_debugctl = __readmsr(IA32_DEBUGCTL);
+	m_GuestState.msr_sysenter_cs = __readmsr(IA32_SYSENTER_CS);
+	m_GuestState.msr_sysenter_eip = __readmsr(IA32_SYSENTER_EIP);
+	m_GuestState.msr_sysenter_esp = __readmsr(IA32_SYSENTER_ESP);
+
+
+
+	
+
+
+
 	return TRUE;
 }
