@@ -184,7 +184,8 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	*(PULONG32)m_VMCSRegion = (ULONG32)m_VmxBasic;
 
 	// Enable VMX Config
-
+	// 
+	// { Init guest state
 	m_GuestState.cs = __readcs();
 	m_GuestState.ds = __readds();
 	m_GuestState.ss = __readss();
@@ -213,9 +214,10 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	m_GuestState.msr_sysenter_cs = __readmsr(IA32_SYSENTER_CS);
 	m_GuestState.msr_sysenter_eip = __readmsr(IA32_SYSENTER_EIP);
 	m_GuestState.msr_sysenter_esp = __readmsr(IA32_SYSENTER_ESP);
-
+	// }
 	
-
+	__writecr0(m_GuestState.cr0);
+	__writecr4(m_GuestState.cr4);
 
 
 	return TRUE;
