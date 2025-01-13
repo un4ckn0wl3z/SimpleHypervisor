@@ -58,7 +58,7 @@ BOOLEAN SimpleHypervisor::Initialize()
 		SetVMExitHandler((ULONG_PTR)VMExitHandler, m_VMXRootStackRegion + 0x2000);
 	}
 
-	m_VMXon = FALSE;
+	m_VMXOn = FALSE;
 
 	InitVMCS();
 
@@ -121,10 +121,15 @@ VOID SimpleHypervisor::SetVMExitHandler(ULONG_PTR HandlerEntryPoint, ULONG_PTR H
 
 BOOLEAN SimpleHypervisor::InitVMCS()
 {
-
+	// Guest status
 	StackPointer = (ULONG_PTR)Asm_StackPointer();
 	ReturnAddress = (ULONG_PTR)Asm_NextInstructionPointer();
 
+	if (m_VMXOn)
+	{
+		DbgPrintEx(77, 0, "SimpleHypervisor is running: %d\r\n");
+		return;
+	}
 
 	// Get physical address
 	m_VMXRegionPhysAddr = MmGetPhysicalAddress(m_VMXRegion).QuadPart;

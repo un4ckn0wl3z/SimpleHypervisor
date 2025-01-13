@@ -129,7 +129,7 @@ public:
 		: m_VMXRegion(NULL)
 		, m_VMCSRegion(NULL)
 		, m_MsrBitmapRegion(NULL)
-		, m_VMXon(FALSE)
+		, m_VMXOn(FALSE)
 		, m_VMXRegionPhysAddr(0)
 		, m_VMCSRegionPhysAddr(0)
 		, m_MsrBitmapRegionPhysAddr(0)
@@ -154,7 +154,7 @@ private:
 	UINT8* m_MsrBitmapRegion;
 
 	ULONG_PTR m_VMXRootStackRegion;
-	BOOLEAN m_VMXon;
+	BOOLEAN m_VMXOn;
 
 	HOST_STATE m_HostState;
 
