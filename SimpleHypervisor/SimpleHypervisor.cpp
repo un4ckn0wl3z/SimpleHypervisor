@@ -128,7 +128,7 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	if (m_VMXOn)
 	{
 		DbgPrintEx(77, 0, "SimpleHypervisor is running: %d\r\n");
-		return;
+		return FALSE;
 	}
 
 	// Get physical address
