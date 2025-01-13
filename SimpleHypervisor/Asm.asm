@@ -10,4 +10,11 @@ Asm_StackPointer PROC
 
 Asm_StackPointer ENDP
 
+Asm_NextInstructionPointer PROC
+
+	mov rax, [rsp]
+	ret
+
+Asm_NextInstructionPointer ENDP
+
 END

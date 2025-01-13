@@ -163,6 +163,7 @@ private:
 	ULONG_PTR m_MsrBitmapRegionPhysAddr;
 
 	ULONG_PTR StackPointer;
+	ULONG_PTR ReturnAddress;
 
 
 };

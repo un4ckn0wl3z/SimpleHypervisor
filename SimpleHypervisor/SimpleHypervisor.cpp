@@ -121,12 +121,16 @@ VOID SimpleHypervisor::SetVMExitHandler(ULONG_PTR HandlerEntryPoint, ULONG_PTR H
 
 BOOLEAN SimpleHypervisor::InitVMCS()
 {
+
+	StackPointer = (ULONG_PTR)Asm_StackPointer();
+	ReturnAddress = (ULONG_PTR)Asm_NextInstructionPointer();
+
+
 	// Get physical address
 	m_VMXRegionPhysAddr = MmGetPhysicalAddress(m_VMXRegion).QuadPart;
 	m_VMCSRegionPhysAddr = MmGetPhysicalAddress(m_VMCSRegion).QuadPart;
 	m_MsrBitmapRegionPhysAddr = MmGetPhysicalAddress(m_MsrBitmapRegion).QuadPart;
 
-	StackPointer = (ULONG_PTR)Asm_StackPointer();
 
 	return TRUE;
 }
