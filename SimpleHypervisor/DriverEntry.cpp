@@ -65,7 +65,7 @@ VOID VTLoadProc(
 	ULONG uCPU = KeGetCurrentProcessorNumber();
 	DbgPrintEx(77, 0, "Debug:CPU Number:------>: %d\r\n", uCPU);
 
-	VT_CPU[uCPU] = new SimpleHypervisor(); // beware leak
+	VT_CPU[uCPU] = new SimpleHypervisor(uCPU); // beware leak
 
 	if (VT_CPU[uCPU]->Initialize())
 	{
@@ -86,12 +86,14 @@ VOID VTUnLoadProc(
 	ULONG uCPU = KeGetCurrentProcessorNumber();
 	DbgPrintEx(77, 0, "Debug:CPU Number:------>: %d\r\n", uCPU);
 
+	VT_CPU[uCPU]->UnInstall();
+
+	VT_CPU[uCPU]->UnInitialize();
+
 	if (VT_CPU[uCPU])
 	{
 		delete VT_CPU[uCPU];
 	}
-
- 	VT_CPU[uCPU]->UnInstall();
 
 	KeSignalCallDpcSynchronize(SystemArgument2);
 	KeSignalCallDpcDone(SystemArgument1);

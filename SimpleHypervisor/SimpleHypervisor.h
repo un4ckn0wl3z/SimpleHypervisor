@@ -125,8 +125,9 @@ typedef struct _HOST_STATE {
 class SimpleHypervisor
 {
 public:
-	SimpleHypervisor()
-		: m_VMXRegion(NULL)
+	SimpleHypervisor(ULONG uCPU)
+		: m_CPU(uCPU)
+		, m_VMXRegion(NULL)
 		, m_VMCSRegion(NULL)
 		, m_MsrBitmapRegion(NULL)
 		, m_VMXOn(FALSE)
@@ -141,6 +142,7 @@ public:
 	BOOLEAN Initialize();
 	BOOLEAN Install();
 	BOOLEAN UnInstall();
+	VOID UnInitialize();
 
 protected:
 	BOOLEAN CheckVTSupported();
@@ -149,6 +151,7 @@ protected:
 	BOOLEAN InitVMCS();
 
 private:
+	ULONG m_CPU;
 	ULONG_PTR* m_VMXRegion;
 	ULONG_PTR* m_VMCSRegion;
 	UINT8* m_MsrBitmapRegion;

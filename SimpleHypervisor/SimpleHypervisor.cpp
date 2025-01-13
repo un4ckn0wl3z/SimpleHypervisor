@@ -66,6 +66,35 @@ BOOLEAN SimpleHypervisor::Initialize()
 
 }
 
+VOID SimpleHypervisor::UnInitialize()
+{
+	if (m_VMXRegion)
+	{
+		MmFreeNonCachedMemory(m_VMXRegion, PAGE_SIZE);
+
+	}
+
+	if (m_VMCSRegion)
+	{
+		MmFreeNonCachedMemory(m_VMCSRegion, PAGE_SIZE);
+
+	}
+
+	if (m_MsrBitmapRegion)
+	{
+		MmFreeNonCachedMemory(m_MsrBitmapRegion, PAGE_SIZE);
+
+	}
+
+	if (m_VMXRootStackRegion)
+	{
+		MmFreeNonCachedMemory((PVOID)m_VMXRootStackRegion, 3 * PAGE_SIZE);
+
+	}
+
+ }
+
+
 BOOLEAN SimpleHypervisor::Install()
 {
 	return TRUE;
@@ -127,7 +156,7 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 
 	if (m_VMXOn)
 	{
-		DbgPrintEx(77, 0, "SimpleHypervisor is running: %d\r\n");
+		DbgPrintEx(77, 0, "Debug:SimpleHypervisor is running: %d\r\n");
 		return FALSE;
 	}
 
@@ -135,6 +164,13 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	m_VMXRegionPhysAddr = MmGetPhysicalAddress(m_VMXRegion).QuadPart;
 	m_VMCSRegionPhysAddr = MmGetPhysicalAddress(m_VMCSRegion).QuadPart;
 	m_MsrBitmapRegionPhysAddr = MmGetPhysicalAddress(m_MsrBitmapRegion).QuadPart;
+
+	DbgPrintEx(77, 
+		0, "Debug:[CPU:%d] -- [VMX] --------- VA: %016llX! ------ phy: %016llX!\r\n",m_CPU , m_VMXRegion, m_VMXRegionPhysAddr);
+	DbgPrintEx(77, 
+		0, "Debug:[CPU:%d] -- [VMCS] -------- VA: %016llX! ------ phy: %016llX!\r\n", m_CPU, m_VMCSRegion, m_VMCSRegionPhysAddr);
+	DbgPrintEx(77, 
+		0, "Debug:[CPU:%d] -- [MsrBitmap] --- VA: %016llX! ------ phy: %016llX!\r\n", m_CPU, m_MsrBitmapRegion, m_MsrBitmapRegionPhysAddr);
 
 
 	return TRUE;
