@@ -27,8 +27,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SimpleHypervisor.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Asm.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SimpleHypervisor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="Asm.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

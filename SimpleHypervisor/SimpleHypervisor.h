@@ -83,20 +83,86 @@ typedef struct _CPUID_ECX
 #define FEATURE_CONTROL_VMXON_ENABLED_OUTSIDE_SMX	(1 << 2)
 //------------------------------------------
 
+#define ROUNDUP(x,align) ((x + align - 1) & ~(align - 1))
 
+//------------------------------------------
+/* GDT */
+typedef struct _GDT {
+	USHORT wLimit;
+	ULONG_PTR ulBase;
+} GDT, * PGDT;
+
+/* IDT */
+typedef struct _IDT {
+	USHORT wLimit;
+	ULONG_PTR ulBase;
+} IDT, * PIDT;
+
+typedef struct _HOST_STATE {
+	ULONG_PTR cr0;
+	ULONG_PTR cr3;
+	ULONG_PTR cr4;
+	ULONG_PTR rsp;
+	ULONG_PTR rip;
+	ULONG_PTR cs;
+	ULONG_PTR ds;
+	ULONG_PTR ss;
+	ULONG_PTR es;
+	ULONG_PTR fs;
+	ULONG_PTR gs;
+	ULONG_PTR tr;
+	ULONG_PTR fsbase;
+	ULONG_PTR gsbase;
+	ULONG_PTR trbase;
+	GDT gdt;
+	IDT idt;
+	ULONG_PTR msr_sysenter_cs;
+	ULONG_PTR msr_sysenter_esp;
+	ULONG_PTR msr_sysenter_eip;
+} HOST_STATE, * PHOST_STATE;
+//---------------------------------------
 
 class SimpleHypervisor
 {
 public:
-	SimpleHypervisor();
+	SimpleHypervisor()
+		: m_VMXRegion(NULL)
+		, m_VMCSRegion(NULL)
+		, m_MsrBitmapRegion(NULL)
+		, m_VMXon(FALSE)
+		, m_VMXRegionPhysAddr(0)
+		, m_VMCSRegionPhysAddr(0)
+		, m_MsrBitmapRegionPhysAddr(0)
+	{
+
+	}
 
 public:
+	BOOLEAN Initialize();
 	BOOLEAN Install();
+	BOOLEAN UnInstall();
 
 protected:
 	BOOLEAN CheckVTSupported();
 	BOOLEAN CheckVTEnable();
+	VOID SetVMExitHandler(ULONG_PTR HandlerEntryPoint, ULONG_PTR HandlerStack);
+	BOOLEAN InitVMCS();
 
 private:
+	ULONG_PTR* m_VMXRegion;
+	ULONG_PTR* m_VMCSRegion;
+	UINT8* m_MsrBitmapRegion;
+
+	ULONG_PTR m_VMXRootStackRegion;
+	BOOLEAN m_VMXon;
+
+	HOST_STATE m_HostState;
+
+	ULONG_PTR m_VMXRegionPhysAddr;
+	ULONG_PTR m_VMCSRegionPhysAddr;
+	ULONG_PTR m_MsrBitmapRegionPhysAddr;
+
+	ULONG_PTR StackPointer;
+
 
 };

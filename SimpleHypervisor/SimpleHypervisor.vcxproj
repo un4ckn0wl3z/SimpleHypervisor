@@ -98,7 +98,11 @@
     <ClCompile Include="SimpleHypervisor.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Asm.h" />
     <ClInclude Include="SimpleHypervisor.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="Asm.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

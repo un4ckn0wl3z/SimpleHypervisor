@@ -1,12 +1,28 @@
 #include <ntifs.h>
 #include "SimpleHypervisor.h"
 
+SimpleHypervisor* VT_CPU[128];
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
 void* __cdecl operator new(unsigned __int64 size)
 {
 	PHYSICAL_ADDRESS highest;
 	highest.QuadPart = 0xFFFFFFFFFFFFFFFF;
 	return MmAllocateContiguousMemory(size, highest);
 }
+
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+void __cdecl operator delete(void* p, size_t size)
+{
+	UNREFERENCED_PARAMETER(size);
+	if (p)
+	{
+		MmFreeContiguousMemory(p);
+		p = NULL;
+	}
+}
+
 
 EXTERN_C
 NTKERNELAPI
@@ -46,10 +62,36 @@ VOID VTLoadProc(
 	_In_opt_ PVOID SystemArgument2
 )
 {
-	DbgPrintEx(77, 0, "Debug:CPU Number:------>: %d\r\n", KeGetCurrentProcessorNumber());
+	ULONG uCPU = KeGetCurrentProcessorNumber();
+	DbgPrintEx(77, 0, "Debug:CPU Number:------>: %d\r\n", uCPU);
 
-	SimpleHypervisor* VT = new SimpleHypervisor(); // beware leak
-	VT->Install();
+	VT_CPU[uCPU] = new SimpleHypervisor(); // beware leak
+
+	if (VT_CPU[uCPU]->Initialize())
+	{
+		VT_CPU[uCPU]->Install();
+	}
+
+	KeSignalCallDpcSynchronize(SystemArgument2);
+	KeSignalCallDpcDone(SystemArgument1);
+}
+
+VOID VTUnLoadProc(
+	_In_ struct _KDPC* Dpc,
+	_In_opt_ PVOID DeferredContext,
+	_In_opt_ PVOID SystemArgument1,
+	_In_opt_ PVOID SystemArgument2
+)
+{
+	ULONG uCPU = KeGetCurrentProcessorNumber();
+	DbgPrintEx(77, 0, "Debug:CPU Number:------>: %d\r\n", uCPU);
+
+	if (VT_CPU[uCPU])
+	{
+		delete VT_CPU[uCPU];
+	}
+
+ 	VT_CPU[uCPU]->UnInstall();
 
 	KeSignalCallDpcSynchronize(SystemArgument2);
 	KeSignalCallDpcDone(SystemArgument1);
@@ -61,11 +103,13 @@ VOID VTLoad()
 	KeGenericCallDpc(VTLoadProc, NULL);
 }
 
+
 #ifdef __cplusplus
 EXTERN_C
 #endif // __cplusplus
 VOID VTUnload(PDRIVER_OBJECT DriverObject)
 {
+	KeGenericCallDpc(VTUnLoadProc, NULL);
 	DbgPrintEx(77, 0, "Debug:VTUnload\r\n");
 }
 
