@@ -219,6 +219,39 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	__writecr0(m_GuestState.cr0);
 	__writecr4(m_GuestState.cr4);
 
+	// Init host state
+
+	// {
+
+	m_HostState.cr0 = __readcr0();
+	m_HostState.cr3 = __readcr3();
+	m_HostState.cr4 = __readcr4();
+
+	m_HostState.cs = __readcs() & 0xF8;
+	m_HostState.ds = __readds() & 0xF8;
+	m_HostState.ss = __readss() & 0xF8;
+	m_HostState.es = __reades() & 0xF8;
+	m_HostState.fs = __readfs() & 0xF8;
+	m_HostState.gs = __readgs() & 0xF8;
+
+	m_HostState.tr = __str();
+	m_HostState.msr_sysenter_cs = __readmsr(IA32_SYSENTER_CS);
+	m_HostState.msr_sysenter_eip = __readmsr(IA32_SYSENTER_EIP);
+	m_HostState.msr_sysenter_esp = __readmsr(IA32_SYSENTER_ESP);
+
+
+	__sgdt(&(m_HostState.gdt));
+
+	__sidt(&(m_HostState.idt));
+
+	// }
+
+
+	// Init EPT
+
+
+
+
 
 	return TRUE;
 }
