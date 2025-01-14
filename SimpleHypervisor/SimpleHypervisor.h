@@ -205,6 +205,38 @@ typedef struct _VMX_PML4E
 }VMX_PML4E, * PVMX_PML4E;
 
 
+// PDPTE struct
+
+typedef struct _VMX_PDPTE
+{
+
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;
+			UINT64 Write : 1;
+			UINT64 Execute : 1;
+			UINT64 Type : 3;
+			UINT64 IgnorePat : 1;
+			UINT64 Large : 1;
+			UINT64 Accessed : 1;
+			UINT64 Dirty : 1;
+			UINT64 UserModeExecute : 1;
+			UINT64 SoftwareUse : 1;
+			UINT64 Reserved : 18;
+			UINT64 PageFrameNumber : 18;
+			UINT64 ReservedHigh : 4;
+			UINT64 SoftwareUseHigh : 11;
+			UINT64 SuppressVme : 1;
+
+		};
+	};
+
+	UINT64 AsUlonglong;
+
+}VMX_PDPTE, * PVMX_PDPTE;
+
 
 typedef struct _VMX_EPT
 {
