@@ -237,6 +237,7 @@ typedef struct _VMX_PDPTE
 
 }VMX_PDPTE, * PVMX_PDPTE;
 
+// 00:29:42
 
 typedef struct _VMX_EPT
 {
