@@ -153,6 +153,69 @@ typedef struct _GUEST_STATE {
 
 //---------------------------------------
 
+#define PML4E_ENTRY_COUNT	512
+#define PDPTE_ENTRY_COUNT	512
+#define PDE_ENTRY_COUNT		512
+
+// EPTP struct
+typedef struct _VMX_EPTP
+{
+	union 
+	{
+		struct
+		{
+			UINT64 Type : 3;
+			UINT64 PageWalkLen : 3;
+			UINT64 EnableAccessAndDirtyFlags : 1;
+			UINT64 Reserved : 5;
+			UINT64 PageFrameNumber : 36;
+			UINT64 ReservedHigh : 15;
+		};
+	};
+
+	UINT64 AsUlonglong;
+} VMX_EPTP, * PVMX_EPTP;
+
+
+// PML4E struct
+
+typedef struct _VMX_PML4E
+{
+
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;
+			UINT64 Write : 1;
+			UINT64 Execute : 1;
+			UINT64 Reserved : 5;
+			UINT64 Accessed : 1;
+			UINT64 SoftwareUse : 1;
+			UINT64 UserModeExecute : 1;
+			UINT64 SoftwareUse2 : 1;
+			UINT64 PageFrameNumber : 36;
+			UINT64 ReservedHigh : 4;
+			UINT64 SoftwareUseHigh : 12;
+		};
+	};
+
+	UINT64 AsUlonglong;
+
+}VMX_PML4E, * PVMX_PML4E;
+
+
+
+typedef struct _VMX_EPT
+{
+
+	DECLSPEC_ALIGN(PAGE_SIZE) VMX_PML4E Pml4[PML4E_ENTRY_COUNT];
+
+
+}VMX_EPT;
+
+//---------------------------------------
+
 class SimpleHypervisor
 {
 public:
