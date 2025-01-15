@@ -153,35 +153,31 @@ typedef struct _GUEST_STATE {
 
 //---------------------------------------
 
-#define PML4E_ENTRY_COUNT	512
-#define PDPTE_ENTRY_COUNT	512
-#define PDE_ENTRY_COUNT		512
-
 // EPTP struct
 typedef struct _VMX_EPTP
 {
-	union 
+	union
 	{
 		struct
 		{
 			UINT64 Type : 3;
-			UINT64 PageWalkLen : 3;
+			UINT64 PageWalkLength : 3;
 			UINT64 EnableAccessAndDirtyFlags : 1;
 			UINT64 Reserved : 5;
 			UINT64 PageFrameNumber : 36;
-			UINT64 ReservedHigh : 15;
+			UINT64 ReservedHigh : 16;
 		};
+
+		UINT64 AsUlonglong;
 	};
 
-	UINT64 AsUlonglong;
-} VMX_EPTP, * PVMX_EPTP;
 
+}VMX_EPTP, * PVMX_EPTP;
+static_assert(sizeof(VMX_EPTP) == sizeof(UINT64), "EPTP Size Mismatch");
 
-// PML4E struct
-
+//PML4E Struct
 typedef struct _VMX_PML4E
 {
-
 	union
 	{
 		struct
@@ -191,61 +187,148 @@ typedef struct _VMX_PML4E
 			UINT64 Execute : 1;
 			UINT64 Reserved : 5;
 			UINT64 Accessed : 1;
-			UINT64 SoftwareUse : 1;
+			UINT64 SofewareUse : 1;
 			UINT64 UserModeExecute : 1;
-			UINT64 SoftwareUse2 : 1;
+			UINT64 SofewareUse2 : 1;
 			UINT64 PageFrameNumber : 36;
 			UINT64 ReservedHigh : 4;
-			UINT64 SoftwareUseHigh : 12;
+			UINT64 SofewareUseHigh : 12;
 		};
+
+		UINT64 AsUlonglong;
 	};
 
-	UINT64 AsUlonglong;
-
 }VMX_PML4E, * PVMX_PML4E;
+static_assert(sizeof(VMX_PML4E) == sizeof(UINT64), "PML4E Size Mismatch");
 
-
-// PDPTE struct
-
-typedef struct _VMX_PDPTE
+//PDPTE LARGE Struct
+typedef struct _VMX_HUGE_PDPTE
 {
-
 	union
 	{
 		struct
 		{
-			UINT64 Read : 1;
-			UINT64 Write : 1;
-			UINT64 Execute : 1;
-			UINT64 Type : 3;
-			UINT64 IgnorePat : 1;
-			UINT64 Large : 1;
-			UINT64 Accessed : 1;
-			UINT64 Dirty : 1;
-			UINT64 UserModeExecute : 1;
-			UINT64 SoftwareUse : 1;
-			UINT64 Reserved : 18;
-			UINT64 PageFrameNumber : 18;
+			UINT64 Read : 1;  //0
+			UINT64 Write : 1; //1
+			UINT64 Execute : 1;  //2
+			UINT64 Type : 3;     //5:3
+			UINT64 IgnorePat : 1;//6
+			UINT64 Large : 1;    //7
+			UINT64 Accessed : 1; //8
+			UINT64 Dirty : 1;    //9
+			UINT64 UserModeExecute : 1;//10
+			UINT64 SofewareUse : 1;    //11
+			UINT64 Reserved : 18;   //29:12
+			UINT64 PageFrameNumber : 18; //(N-1):30
 			UINT64 ReservedHigh : 4;
-			UINT64 SoftwareUseHigh : 11;
+			UINT64 SoftworeUseHigh : 11;
 			UINT64 SuppressVme : 1;
-
 		};
+
+		UINT64 AsUlonglong;
 	};
 
-	UINT64 AsUlonglong;
+}VMX_HUGE_PDPTE, * PVMX_HUGE_PDPTE;
+static_assert(sizeof(VMX_HUGE_PDPTE) == sizeof(UINT64), "HUGE_PDPTE Size Mismatch");
+
+//PDPTE Struct
+typedef struct _VMX_PDPTE
+{
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;  //0
+			UINT64 Write : 1; //1
+			UINT64 Execute : 1;  //2
+			UINT64 Reserved : 5; //7:3
+			UINT64 Accessed : 1; //8
+			UINT64 SoftwareUse : 1; //9
+			UINT64 UserModeExecute : 1;//10
+			UINT64 SofewareUse2 : 1;    //11
+			UINT64 PageFrameNumber : 36;
+			UINT64 ReservedHigh : 4;
+			UINT64 SoftworeUseHigh : 12; //63:52
+		};
+
+		UINT64 AsUlonglong;
+	};
 
 }VMX_PDPTE, * PVMX_PDPTE;
+static_assert(sizeof(VMX_PDPTE) == sizeof(UINT64), "PDPTE Size Mismatch");
 
-// 00:29:42
+//PDE LARGE Struct
+typedef struct _VMX_LARGE_PDE
+{
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;  //0
+			UINT64 Write : 1; //1
+			UINT64 Execute : 1;  //2
+			UINT64 Type : 3;     //5:3
+			UINT64 IgnorePat : 1;//6
+			UINT64 Large : 1;    //7
+			UINT64 Accessed : 1; //8
+			UINT64 Dirty : 1;    //9
+			UINT64 UserModeExecute : 1;//10
+			UINT64 SofewareUse : 1;    //11
+			UINT64 Reserved : 9;   //20:12
+			UINT64 PageFrameNumber : 27; //(N-1):21
+			UINT64 ReservedHigh : 4;
+			UINT64 SoftworeUseHigh : 11; //62:52
+			UINT64 SuppressVme : 1;
+		};
+
+		UINT64 AsUlonglong;
+	};
+
+}VMX_LARGE_PDE, * PVMX_LARGE_PDE;
+static_assert(sizeof(VMX_LARGE_PDE) == sizeof(UINT64), "LARGE_PDE Size Mismatch");
+
+//PDE Struct
+typedef struct _VMX_PDE
+{
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;  //0
+			UINT64 Write : 1; //1
+			UINT64 Execute : 1;  //2
+			UINT64 Reserved : 4;     //6:3
+			UINT64 Small : 1;    //7
+			UINT64 Accessed : 1; //8
+			UINT64 SofewareUse : 1;    //9
+			UINT64 UserModeExecute : 1;//10
+			UINT64 SofewareUse2 : 1;   //11
+			UINT64 PageFrameNumber : 36; //(N-1):12
+			UINT64 ReservedHigh : 4;
+			UINT64 SoftworeUseHigh : 12; //63:52
+		};
+
+		UINT64 AsUlonglong;
+	};
+
+}VMX_PDE, * PVMX_PDE;
+static_assert(sizeof(VMX_PDE) == sizeof(UINT64), "PDE Size Mismatch");
+
+// ---------------------------------------
+
+
+#define PML4E_ENTRY_COUNT 512
+#define PDPTE_ENTRY_COUNT 512
+#define PDE_ENTRY_COUNT   512
+
+
 
 typedef struct _VMX_EPT
 {
-
-	DECLSPEC_ALIGN(PAGE_SIZE) VMX_PML4E Pml4[PML4E_ENTRY_COUNT];
-
-
-}VMX_EPT;
+	DECLSPEC_ALIGN(PAGE_SIZE) VMX_PML4E PML4E[PML4E_ENTRY_COUNT];
+	DECLSPEC_ALIGN(PAGE_SIZE) VMX_PDPTE PDPTE[PDPTE_ENTRY_COUNT];
+	DECLSPEC_ALIGN(PAGE_SIZE) VMX_LARGE_PDE PDE[PDPTE_ENTRY_COUNT][PDE_ENTRY_COUNT];
+}VMX_EPT, * PVMX_EPT;
 
 //---------------------------------------
 
