@@ -12,7 +12,7 @@
 
 
 #define VMWRITE_ERR_RET(e, v)\
-		DbgPrintEx(77, 0, "Debug: %s: 0x%016llX\r\n", #e, v);\
+		DbgPrintEx(77, 0, "Debug: [vmwrite] %s: 0x%016llX\r\n", #e, v);\
 		VMERR_RET(vmwrite(e, v), "vmwrite - " #e)\
 
 
