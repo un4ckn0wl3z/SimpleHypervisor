@@ -362,6 +362,8 @@ VOID SimpleHypervisor::InitializeEPT()
 
 			}
 
+			m_EPT->PDT[i][j].u.Type = CandidateMemoryType;
+
 		}
 	}
 
