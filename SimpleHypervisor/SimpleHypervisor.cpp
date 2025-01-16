@@ -3,6 +3,39 @@
 #include "SimpleHypervisor.h"
 #include "Asm.h"
 
+#define VMERR_RET(x, s)\
+	if( (x) != 0)\
+	{\
+		DbgPrintEx(77, 0, "Debug: %s call is out of order\r\n", s);\
+		return FALSE;\
+	}\
+
+
+#define VMWRITE_ERR_RET(e, v)\
+		DbgPrintEx(77, 0, "Debug: %s: 0x%016llX\r\n", #e, v);\
+		VMERR_RET(vmwrite(e, v), "vmwrite - " #e)\
+
+
+__forceinline unsigned char vmxon(ULONG_PTR* VmxRegion)
+{
+	return __vmx_on(VmxRegion);
+}
+
+__forceinline unsigned char vmxclear(ULONG_PTR* VmcsRegion)
+{
+	return __vmx_vmclear(VmcsRegion);
+}
+
+__forceinline unsigned char vmxptrld(ULONG_PTR* VmcsRegion)
+{
+	return __vmx_vmptrld(VmcsRegion);
+}
+
+__forceinline unsigned char vmwrite(VMCSFIELD Encoding, ULONG_PTR Value)
+{
+	return __vmx_vmwrite(Encoding, Value);
+}
+
 EXTERN_C
 BOOLEAN VMExitHandler(ULONG_PTR* Registers)
 {
@@ -248,10 +281,19 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 
 
 	// Init EPT
-
 	InitializeEPT();
 
+	// Setup VMX
+	VMERR_RET(vmxon(&m_VMXRegionPhysAddr), "vmxon");
+	DbgPrintEx(77, 0, "Debug: vmxon started successfully\r\n");
+	m_VMXOn = TRUE;
 
+	VMERR_RET(vmxclear(&m_VMCSRegionPhysAddr), "vmxclear");
+	VMERR_RET(vmxptrld(&m_VMCSRegionPhysAddr), "vmxptrld");
+	DbgPrintEx(77, 0, "Debug: VMCS loaded successfully\r\n");
+
+	// Setup VMCS
+	VMWRITE_ERR_RET(VMCS_LINK_POINTER, 0xFFFFFFFFFFFFFFFFL);
 
 
 	return TRUE;
