@@ -254,9 +254,6 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 
 
 
-
-
-
 	return TRUE;
 }
 
@@ -282,9 +279,14 @@ VOID SimpleHypervisor::InitializeEPT()
 	}
 
 	RtlSecureZeroMemory(m_EPT, sizeof(VMX_EPT));
+	DbgPrintEx(77, 0, "Debug:[%d]EPT Memory:------->%p\r\n", m_CPU, m_EPT);
+
 
 	// Reading the mtrr addressing range
 	mtrrCapabilities.AsUlonglong = __readmsr(MTRR_MSR_CAPABILITIES);
+	DbgPrintEx(77, 0, "Debug:[%d]mtrrCapabilities:------->0x%016llX\r\n", m_CPU, mtrrCapabilities.AsUlonglong);
+	DbgPrintEx(77, 0, "Debug:[%d]mtrrCapabilities.u.VarCnt:------->0x%X\r\n", m_CPU, mtrrCapabilities.u.VarCnt);
+
 
 	for (i = 0; i < mtrrCapabilities.u.VarCnt; i++)
 	{
@@ -306,6 +308,12 @@ VOID SimpleHypervisor::InitializeEPT()
 
 	// Prepare item to charge EPT content
 
+	m_EPT->PML4E[0].u.Read = 1;
+	m_EPT->PML4E[0].u.Write = 1;
+	m_EPT->PML4E[0].u.Execute = 1;
+	m_EPT->PML4E[0].u.PageFrameNumber = (MmGetPhysicalAddress(m_EPT->PDPTE)).QuadPart / PAGE_SIZE;
+
+	DbgPrintEx(77, 0, "Debug:[%d]PML4E[0].u.PageFrameNumber:------->0x%016llX\r\n", m_CPU, m_EPT->PML4E[0].u.PageFrameNumber);
 
 
 
