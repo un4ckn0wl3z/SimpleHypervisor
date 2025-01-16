@@ -21,6 +21,7 @@ typedef struct _CPUID_ECX
 #define CPUID_1_ECX_VMX (1<<5)
 // }
 
+
 /* MSRs */
 #define IA32_FEATURE_CONTROL_CODE		        0x03A
 #define IA32_SYSENTER_CS                        0x174
@@ -59,7 +60,7 @@ typedef struct _CPUID_ECX
 #define MSR_IA32_VMX_TRUE_EXIT_CTLS             0x48f
 #define MSR_IA32_VMX_TRUE_ENTRY_CTLS            0x490
 
-#define MSR_IA32_MTRRCAP				0xfe
+#define MSR_IA32_MTRRCAP			0xfe
 #define MSR_IA32_MTRR_DEF_TYPE			0x2ff
 #define MSR_IA32_MTRR_PHYSBASE(n)		(0x200 + 2*(n))
 #define MSR_IA32_MTRR_PHYSMASK(n)		(0x200 + 2*(n) + 1)
@@ -74,14 +75,13 @@ typedef struct _CPUID_ECX
 #define MSR_IA32_MTRR_FIX4K_E8000		0x26d
 #define MSR_IA32_MTRR_FIX4K_F0000		0x26e
 #define MSR_IA32_MTRR_FIX4K_F8000		0x26f
-#define MSR_GS_BASE						0xC0000101
-
+#define MSR_GS_BASE 0xC0000101
 
 //------------------------------------------
 #define FEATURE_CONTROL_LOCKED	(1 << 0)
 #define FEATURE_CONTROL_VMXON_ENABLED_INSIDE_SMX	(1 << 1)
 #define FEATURE_CONTROL_VMXON_ENABLED_OUTSIDE_SMX	(1 << 2)
-//------------------------------------------
+
 
 #define ROUNDUP(x,align) ((x + align - 1) & ~(align - 1))
 
@@ -120,7 +120,6 @@ typedef struct _HOST_STATE {
 	ULONG_PTR msr_sysenter_esp;
 	ULONG_PTR msr_sysenter_eip;
 } HOST_STATE, * PHOST_STATE;
-//---------------------------------------
 
 typedef struct _GUEST_STATE {
 	ULONG_PTR cs;
@@ -150,10 +149,9 @@ typedef struct _GUEST_STATE {
 	ULONG_PTR msr_efer;
 	ULONG_PTR msr_bndcfgs;
 } GUEST_STATE, * PGUEST_STATE;
-
 //---------------------------------------
-
-// EPTP struct
+#pragma pack(push,1)
+// EPTP Struct
 typedef struct _VMX_EPTP
 {
 	union
@@ -166,7 +164,7 @@ typedef struct _VMX_EPTP
 			UINT64 Reserved : 5;
 			UINT64 PageFrameNumber : 36;
 			UINT64 ReservedHigh : 16;
-		};
+		}u;
 
 		UINT64 AsUlonglong;
 	};
@@ -175,7 +173,7 @@ typedef struct _VMX_EPTP
 }VMX_EPTP, * PVMX_EPTP;
 static_assert(sizeof(VMX_EPTP) == sizeof(UINT64), "EPTP Size Mismatch");
 
-//PML4E Struct
+// PML4E Struct
 typedef struct _VMX_PML4E
 {
 	union
@@ -193,7 +191,7 @@ typedef struct _VMX_PML4E
 			UINT64 PageFrameNumber : 36;
 			UINT64 ReservedHigh : 4;
 			UINT64 SofewareUseHigh : 12;
-		};
+		}u;
 
 		UINT64 AsUlonglong;
 	};
@@ -201,7 +199,7 @@ typedef struct _VMX_PML4E
 }VMX_PML4E, * PVMX_PML4E;
 static_assert(sizeof(VMX_PML4E) == sizeof(UINT64), "PML4E Size Mismatch");
 
-//PDPTE LARGE Struct
+// HUGE_PDPTE Struct
 typedef struct _VMX_HUGE_PDPTE
 {
 	union
@@ -223,7 +221,7 @@ typedef struct _VMX_HUGE_PDPTE
 			UINT64 ReservedHigh : 4;
 			UINT64 SoftworeUseHigh : 11;
 			UINT64 SuppressVme : 1;
-		};
+		}u;
 
 		UINT64 AsUlonglong;
 	};
@@ -231,7 +229,7 @@ typedef struct _VMX_HUGE_PDPTE
 }VMX_HUGE_PDPTE, * PVMX_HUGE_PDPTE;
 static_assert(sizeof(VMX_HUGE_PDPTE) == sizeof(UINT64), "HUGE_PDPTE Size Mismatch");
 
-//PDPTE Struct
+// PDPTE Struct
 typedef struct _VMX_PDPTE
 {
 	union
@@ -249,7 +247,7 @@ typedef struct _VMX_PDPTE
 			UINT64 PageFrameNumber : 36;
 			UINT64 ReservedHigh : 4;
 			UINT64 SoftworeUseHigh : 12; //63:52
-		};
+		}u;
 
 		UINT64 AsUlonglong;
 	};
@@ -257,7 +255,7 @@ typedef struct _VMX_PDPTE
 }VMX_PDPTE, * PVMX_PDPTE;
 static_assert(sizeof(VMX_PDPTE) == sizeof(UINT64), "PDPTE Size Mismatch");
 
-//PDE LARGE Struct
+// LARGE_PDE Struct
 typedef struct _VMX_LARGE_PDE
 {
 	union
@@ -279,7 +277,7 @@ typedef struct _VMX_LARGE_PDE
 			UINT64 ReservedHigh : 4;
 			UINT64 SoftworeUseHigh : 11; //62:52
 			UINT64 SuppressVme : 1;
-		};
+		}u;
 
 		UINT64 AsUlonglong;
 	};
@@ -287,7 +285,7 @@ typedef struct _VMX_LARGE_PDE
 }VMX_LARGE_PDE, * PVMX_LARGE_PDE;
 static_assert(sizeof(VMX_LARGE_PDE) == sizeof(UINT64), "LARGE_PDE Size Mismatch");
 
-//PDE Struct
+// PDE Struct
 typedef struct _VMX_PDE
 {
 	union
@@ -306,7 +304,7 @@ typedef struct _VMX_PDE
 			UINT64 PageFrameNumber : 36; //(N-1):12
 			UINT64 ReservedHigh : 4;
 			UINT64 SoftworeUseHigh : 12; //63:52
-		};
+		}u;
 
 		UINT64 AsUlonglong;
 	};
@@ -314,14 +312,10 @@ typedef struct _VMX_PDE
 }VMX_PDE, * PVMX_PDE;
 static_assert(sizeof(VMX_PDE) == sizeof(UINT64), "PDE Size Mismatch");
 
-// ---------------------------------------
-
 
 #define PML4E_ENTRY_COUNT 512
 #define PDPTE_ENTRY_COUNT 512
 #define PDE_ENTRY_COUNT   512
-
-
 
 typedef struct _VMX_EPT
 {
@@ -330,6 +324,77 @@ typedef struct _VMX_EPT
 	DECLSPEC_ALIGN(PAGE_SIZE) VMX_LARGE_PDE PDE[PDPTE_ENTRY_COUNT][PDE_ENTRY_COUNT];
 }VMX_EPT, * PVMX_EPT;
 
+typedef struct _MTRR_CAPABILITIES
+{
+	union
+	{
+		struct
+		{
+			UINT64 VarCnt : 8;
+			UINT64 FixedSupported : 1;
+			UINT64 Reserved : 1;
+			UINT64 WcSupported : 1;
+			UINT64 SmrrSupported : 1;
+			UINT64 Reserved2 : 52;
+		}u;
+
+		UINT64 AsUlonglong;
+	};
+}MTRR_CAPABILITIES, * PMTRR_CAPABILITIES;
+static_assert(sizeof(MTRR_CAPABILITIES) == sizeof(UINT64), "MTRR_CAPABILITIES Size Mismatch");
+
+typedef struct _MTRR_VARIABLE_BASE
+{
+	union
+	{
+		struct
+		{
+			UINT64 Type : 8;
+			UINT64 Reserved : 4;
+			UINT64 PhysBase : 36;
+			UINT64 Reserved2 : 16;
+		}u;
+
+		UINT64 AsUlonglong;
+	};
+}MTRR_VARIABLE_BASE, * PMTRR_VARIABLE_BASE;
+static_assert(sizeof(MTRR_VARIABLE_BASE) == sizeof(UINT64), "MTRR_VARIABLE_BASE Size Mismatch");
+
+typedef struct _MTRR_VARIABLE_MASK
+{
+	union
+	{
+		struct
+		{
+			UINT64 Reserved : 11;
+			UINT64 Enabled : 1;
+			UINT64 PhysMask : 36;
+			UINT64 Reserved2 : 16;
+		}u;
+
+		UINT64 AsUlonglong;
+	};
+}MTRR_VARIABLE_MASK, * PMTRR_VARIABLE_MASK;
+C_ASSERT(sizeof(MTRR_VARIABLE_MASK) == sizeof(UINT64));
+//static_assert(sizeof(MTRR_VARIABLE_MASK) == sizeof(UINT64), "MTRR_VARIABLE_MASK Size Mismatch");
+
+#pragma pack(pop)
+
+
+typedef struct _SHV_MTRR_RANGE
+{
+	UINT32 Enabled;
+	UINT32 Type;
+	UINT64 PhysicalAddressMin;
+	UINT64 PhysicalAddressMax;
+}SHV_MTRR_RANGE, * PSHV_MTRR_RANGE;
+
+#define MTRR_MSR_CAPABILITIES   0x0fe
+#define MTRR_MSR_DEFAULT        0x2ff
+#define MTRR_MSR_VARIABLE_BASE  0x200
+#define MTRR_MSR_VARIABLE_MASK  (MTRR_MSR_VARIABLE_BASE+1)
+#define MTRR_PAGE_SIZE          4096
+#define MTRR_PAGE_MASK          (~(MTRR_PAGE_SIZE-1))
 //---------------------------------------
 
 class SimpleHypervisor
@@ -344,6 +409,7 @@ public:
 		, m_VMXRegionPhysAddr(0)
 		, m_VMCSRegionPhysAddr(0)
 		, m_MsrBitmapRegionPhysAddr(0)
+		, m_EPT(NULL)
 	{
 
 	}
@@ -359,6 +425,7 @@ protected:
 	BOOLEAN CheckVTEnable();
 	VOID SetVMExitHandler(ULONG_PTR HandlerEntryPoint, ULONG_PTR HandlerStack);
 	BOOLEAN InitVMCS();
+	VOID InitializeEPT();
 
 private:
 	ULONG m_CPU;
@@ -382,5 +449,6 @@ private:
 	ULONG_PTR m_VmxBasic;
 	ULONG_PTR m_VmxFeatureControl;
 
+	VMX_EPT* m_EPT;
 
 };

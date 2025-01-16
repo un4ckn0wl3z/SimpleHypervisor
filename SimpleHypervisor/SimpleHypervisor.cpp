@@ -249,9 +249,66 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 
 	// Init EPT
 
+	InitializeEPT();
+
+
+
 
 
 
 
 	return TRUE;
+}
+
+VOID SimpleHypervisor::InitializeEPT()
+{
+	PHYSICAL_ADDRESS highest;
+	MTRR_CAPABILITIES mtrrCapabilities;
+	MTRR_VARIABLE_BASE mtrrBase;
+	MTRR_VARIABLE_MASK mtrrMask;
+	SHV_MTRR_RANGE mtrrData[16];
+
+	int i = 0;
+
+	unsigned long bit = 0;
+
+	highest.QuadPart = 0xFFFFFFFFFFFFFFFF;
+
+	m_EPT = (PVMX_EPT)MmAllocateContiguousMemory(sizeof(VMX_EPT), highest);
+
+	if (!m_EPT)
+	{
+		return;
+	}
+
+	RtlSecureZeroMemory(m_EPT, sizeof(VMX_EPT));
+
+	// Reading the mtrr addressing range
+	mtrrCapabilities.AsUlonglong = __readmsr(MTRR_MSR_CAPABILITIES);
+
+	for (i = 0; i < mtrrCapabilities.u.VarCnt; i++)
+	{
+		mtrrBase.AsUlonglong = __readmsr(MTRR_MSR_VARIABLE_BASE + i * 2);
+		mtrrMask.AsUlonglong = __readmsr(MTRR_MSR_VARIABLE_MASK + i * 2);
+
+		mtrrData[i].Type = mtrrBase.u.Type;
+		mtrrData[i].Enabled = mtrrMask.u.Enabled;
+		if (mtrrData[i].Enabled != FALSE)
+		{
+			// Set Base Address
+			mtrrData[i].PhysicalAddressMin = mtrrBase.u.PhysBase * MTRR_PAGE_SIZE;
+
+			_BitScanForward64(&bit, mtrrMask.u.PhysMask * MTRR_PAGE_SIZE);
+			mtrrData[i].PhysicalAddressMax = mtrrData[i].PhysicalAddressMin + (1ULL << bit) - 1;
+
+		}
+	}
+
+	// Prepare item to charge EPT content
+
+
+
+
+
+
 }
