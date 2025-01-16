@@ -266,8 +266,11 @@ VOID SimpleHypervisor::InitializeEPT()
 	SHV_MTRR_RANGE mtrrData[16];
 
 	int i = 0;
+	int j = 0;
 
 	unsigned long bit = 0;
+	ULONG_PTR LargePageAddress = 0;
+	ULONG CandidateMemoryType = 0;
 
 	highest.QuadPart = 0xFFFFFFFFFFFFFFFF;
 
@@ -306,14 +309,61 @@ VOID SimpleHypervisor::InitializeEPT()
 		}
 	}
 
-	// Prepare item to charge EPT content
+	// Prepare item to fill in EPT content
 
-	m_EPT->PML4E[0].u.Read = 1;
-	m_EPT->PML4E[0].u.Write = 1;
-	m_EPT->PML4E[0].u.Execute = 1;
-	m_EPT->PML4E[0].u.PageFrameNumber = (MmGetPhysicalAddress(m_EPT->PDPTE)).QuadPart / PAGE_SIZE;
+	m_EPT->PML4T[0].u.Read = 1;
+	m_EPT->PML4T[0].u.Write = 1;
+	m_EPT->PML4T[0].u.Execute = 1;
+	m_EPT->PML4T[0].u.PageFrameNumber = (MmGetPhysicalAddress(m_EPT->PDPT)).QuadPart / PAGE_SIZE;
 
-	DbgPrintEx(77, 0, "Debug:[%d]PML4E[0].u.PageFrameNumber:------->0x%016llX\r\n", m_CPU, m_EPT->PML4E[0].u.PageFrameNumber);
+	DbgPrintEx(77, 0, "Debug:[%d]PML4E[0].u.PageFrameNumber:------->0x%016llX\r\n", m_CPU, m_EPT->PML4T[0].u.PageFrameNumber);
+
+
+	for (i = 0; i < PDPTE_ENTRY_COUNT; i++)
+	{
+		// Fill-in page count for PDPT
+		m_EPT->PDPT[i].u.Read = 1;
+		m_EPT->PDPT[i].u.Write = 1;
+		m_EPT->PDPT[i].u.Execute = 1;
+		m_EPT->PDPT[i].u.PageFrameNumber = (MmGetPhysicalAddress(&m_EPT->PDT[i][0])).QuadPart / PAGE_SIZE;
+	}
+
+	for (i = 0; i < PDPTE_ENTRY_COUNT; i++)
+	{
+		// Build every 2M of EPT as one page
+		for (j = 0; j < PDE_ENTRY_COUNT; j++) 
+		{
+			m_EPT->PDT[i][j].u.Read = 1;
+			m_EPT->PDT[i][j].u.Write = 1;
+			m_EPT->PDT[i][j].u.Execute = 1;
+			m_EPT->PDT[i][j].u.Large = 1;
+			m_EPT->PDT[i][j].u.PageFrameNumber = (i * 512) + j;
+
+			LargePageAddress = m_EPT->PDT[i][j].u.PageFrameNumber * _2MB;
+
+			CandidateMemoryType = MTRR_TYPE_WB;
+
+			for (int k = 0; k < sizeof(mtrrData) / sizeof(mtrrData[0]); k++)
+			{
+				// check memory enabled
+				if (mtrrData[k].Enabled != FALSE)
+				{
+					// Check boundary
+					if ( ((LargePageAddress + _2MB) >= mtrrData[k].PhysicalAddressMin) &&
+						   (LargePageAddress <= mtrrData[k].PhysicalAddressMax)
+						)
+					{
+						// Change type
+						CandidateMemoryType = mtrrData[k].Type;
+
+					}
+
+				}
+
+			}
+
+		}
+	}
 
 
 
