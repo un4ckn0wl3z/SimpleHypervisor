@@ -1,9 +1,11 @@
 
 _ASM segment para 'CODE'
 
+extern VMExitHandler :PROC
+
 SAVESTATE MACRO
 	push r15
-	mov r15,rsp
+	mov r15,rsp  ;First save the original stack top (RSP before entering the takeover function)
 	add r15,8
 	push r14
 	push r13
@@ -123,12 +125,18 @@ Asm_NextInstructionPointer ENDP
 
 Asm_VMExitHandler PROC
 	cli
-	SAVESTATE
+	SAVESTATE   ;Save state
+	mov   rcx,rsp   ;Put the top of the stack to rcx
 
-	;Call ExitHandler
+	sub   rsp,0100h
+	call  VMExitHandler ;Call VMExitHandler(__fastcall)
+	add   rsp,0100h
 
-	LOADSTATE
+
+	LOADSTATE   ;Restoration register
 	sti
+__do_resume:
+	vmresume;   Return to VM non-root (return to the Guest environment to continue execution)
 
 
 

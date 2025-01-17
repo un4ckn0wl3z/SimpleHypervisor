@@ -9,7 +9,7 @@
 #define VMERR_RET(x, s)\
 	if( (x) != 0 )\
 	{\
-		DbgPrintEx(77,0,"Debug:[%d]%s VMERR_RET!\n",m_CPU, s);\
+		DbgPrint("Debug:%s Call [failed]!\n", s);\
 		return;\
 	}
 
@@ -17,6 +17,9 @@
 	DbgPrintEx(77,0,"Debug:[%d]%s:0x%016llX\n",m_CPU, #e, v);\
 	VMERR_RET(vmxwrite(e,v),"vmwrite - " #e);
 
+#define VMREAD_ERR_RET(e,v)\
+	DbgPrint("Debug:%s------>0x%016llX\n", #e, v);\
+    VMERR_RET(vmxread(e,v),"vmread - " #e);
 
 __forceinline unsigned char vmxon(ULONG_PTR* VmxRegion)
 {
@@ -38,6 +41,11 @@ __forceinline unsigned char vmxwrite(VMCSFIELD Encoding, ULONG_PTR Value)
 	return __vmx_vmwrite(Encoding, Value);
 }
 
+__forceinline unsigned char vmxread(VMCSFIELD Encoding, ULONG_PTR* Value)
+{
+	return __vmx_vmread(Encoding, Value);
+}
+
 __forceinline unsigned char vmxlaunch()
 {
 	return __vmx_vmlaunch();
@@ -50,12 +58,73 @@ __forceinline ULONG_PTR VmxAdjustMsr(ULONG_PTR MsrValue, ULONG_PTR DesiredValue)
 	return DesiredValue;
 }
 
-EXTERN_C
-BOOLEAN VMExitHandler(ULONG_PTR* Registers)
+void ShowGuestRegister(ULONG_PTR* Registers)
 {
-	//
-	UNREFERENCED_PARAMETER(Registers);
-	return TRUE;
+	ULONG_PTR Rip = 0, Rsp = 0;
+	ULONG_PTR Cr0 = 0, Cr3 = 0, Cr4 = 0;
+	ULONG_PTR Cs = 0, Ss = 0, Ds = 0, Es = 0, Fs = 0, Gs = 0, Tr = 0, Ldtr = 0;
+	ULONG_PTR GsBase = 0, DebugCtl = 0, Dr7 = 0, RFlags = 0;
+	ULONG_PTR IdtBase = 0, GdtBase = 0, IdtLimit = 0, GdtLimit = 0;
+
+	DbgPrint("Debug:RAX = 0x%016llX RCX = 0x%016llX RDX = 0x%016llX RBX = 0x%016llX\n",
+		Registers[R_RAX], Registers[R_RCX], Registers[R_RDX], Registers[R_RBX]);
+	DbgPrint("Debug:RSP = 0x%016llX RBP = 0x%016llX RSI = 0x%016llX RDI = 0x%016llX\n",
+		Registers[R_RSP], Registers[R_RBP], Registers[R_RSI], Registers[R_RDI]);
+	DbgPrint("Debug:R8 = 0x%016llX R9 = 0x%016llX R10 = 0x%016llX R11 = 0x%016llX\n",
+		Registers[R_R8], Registers[R_R9], Registers[R_R10], Registers[R_R11]);
+	DbgPrint("Debug:R12 = 0x%016llX R13 = 0x%016llX R14 = 0x%016llX R15 = 0x%016llX\n",
+		Registers[R_R12], Registers[R_R13], Registers[R_R14], Registers[R_R15]);
+
+	__vmx_vmread(GUEST_RSP, &Rsp);
+	__vmx_vmread(GUEST_RIP, &Rip);
+	DbgPrint("Debug:RSP = 0x%016llX RIP = 0x%016llX\n", Rsp, Rip);
+
+	__vmx_vmread(GUEST_CR0, &Cr0);
+	__vmx_vmread(GUEST_CR3, &Cr3);
+	__vmx_vmread(GUEST_CR4, &Cr4);
+	DbgPrint("Debug:CR0 = 0x%016llX CR3 = 0x%016llX CR4 = 0x%016llX\n", Cr0, Cr3, Cr4);
+
+	__vmx_vmread(GUEST_CS_SELECTOR, &Cs);
+	__vmx_vmread(GUEST_DS_SELECTOR, &Ds);
+	__vmx_vmread(GUEST_ES_SELECTOR, &Es);
+	__vmx_vmread(GUEST_FS_SELECTOR, &Fs);
+	__vmx_vmread(GUEST_GS_SELECTOR, &Gs);
+	__vmx_vmread(GUEST_TR_SELECTOR, &Tr);
+	__vmx_vmread(GUEST_LDTR_SELECTOR, &Ldtr);
+	DbgPrint("Debug:CS = 0x%016llX DS = 0x%016llX ES = 0x%016llX FS = 0x%016llX GS = 0x%016llX TR = 0x%016llX LDTR = 0x%016llX\n",
+		Cs, Ds, Es, Fs, Gs, Tr, Ldtr);
+
+	__vmx_vmread(GUEST_GS_BASE, &GsBase);
+	__vmx_vmread(GUEST_IA32_DEBUGCTL, &DebugCtl);
+	__vmx_vmread(GUEST_DR7, &Dr7);
+	__vmx_vmread(GUEST_RFLAGS, &RFlags);
+	DbgPrint("Debug:GsBase = 0x%016llX DebugCtl = 0x%016llX Dr7 = 0x%016llX RFlags = 0x%016llX\n",
+		GsBase, DebugCtl, Dr7, RFlags);
+
+	__vmx_vmread(GUEST_IDTR_BASE, &IdtBase);
+	__vmx_vmread(GUEST_IDTR_LIMIT, &IdtLimit);
+	DbgPrint("Debug:IdtBase = 0x%016llX IdtLimit = 0x%016llX\n", IdtBase, IdtLimit);
+
+	__vmx_vmread(GUEST_GDTR_BASE, &GdtBase);
+	__vmx_vmread(GUEST_GDTR_LIMIT, &GdtLimit);
+	DbgPrint("Debug:GdtBase = 0x%016llX GdtLimit = 0x%016llX\n", GdtBase, GdtLimit);
+
+	return VOID();
+}
+
+EXTERN_C VOID VMExitHandler(ULONG_PTR* Registers)
+{
+	ULONG_PTR GuestRIP = 0;
+	ULONG_PTR ExitInstructionLength = 0;
+	//ShowGuestRegister(Registers);
+	VMREAD_ERR_RET(GUEST_RIP, &GuestRIP);
+	VMREAD_ERR_RET(VM_EXIT_INSTRUCTION_LEN, &ExitInstructionLength);
+
+	// more blah blah
+
+	__vmx_vmwrite(GUEST_RIP, GuestRIP + ExitInstructionLength);
+
+	return VOID();
 }
 
 BOOLEAN SimpleHypervisor::Initialize()
@@ -103,7 +172,8 @@ VOID SimpleHypervisor::UnInitialize()
 {
 	if (m_VMXOn)
 	{
- 		__vmx_off();
+		// Missing one to exit VMCALL
+		__vmx_off();
 		m_VMXOn = FALSE;
 	}
 
