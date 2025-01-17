@@ -3,6 +3,8 @@
 #include "SimpleHypervisor.h"
 #include "Asm.h"
 
+#define ENABLE_EPT
+
 #define VMERR_RET(x, s)\
 	if( (x) != 0)\
 	{\
@@ -35,6 +37,15 @@ __forceinline unsigned char vmwrite(VMCSFIELD Encoding, ULONG_PTR Value)
 {
 	return __vmx_vmwrite(Encoding, Value);
 }
+
+__forceinline ULONG_PTR VmxAdjustMsr(ULONG_PTR MsrValue, ULONG_PTR DesiredValue)
+{
+	DesiredValue &= (MsrValue >> 32);
+	DesiredValue |= (MsrValue & 0xFFFFFFFF);
+	return DesiredValue;
+}
+
+
 
 EXTERN_C
 BOOLEAN VMExitHandler(ULONG_PTR* Registers)
@@ -279,9 +290,12 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 
 	// }
 
-
+#ifdef ENABLE_EPT
 	// Init EPT
 	InitializeEPT();
+
+#endif // ENABLE_EPT
+
 
 	// Setup VMX
 	VMERR_RET(vmxon(&m_VMXRegionPhysAddr), "vmxon");
@@ -294,6 +308,46 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 
 	// Setup VMCS
 	VMWRITE_ERR_RET(VMCS_LINK_POINTER, 0xFFFFFFFFFFFFFFFFL);
+
+#ifdef ENABLE_EPT
+
+	m_EPTP->AsUlonglong = 0;
+	m_EPTP->u.PageWalkLength = 3;
+	m_EPTP->u.Type = MTRR_TYPE_WB;
+	m_EPTP->u.PageFrameNumber = MmGetPhysicalAddress(m_EPT->PML4T).QuadPart / PAGE_SIZE;
+	
+	VMWRITE_ERR_RET(EPT_POINTER, m_EPTP->AsUlonglong);
+	VMWRITE_ERR_RET(VIRTUAL_PROCESSOR_ID, 1);
+
+#endif // ENABLE_EPT
+
+	// VM Execution Control Fields
+	VMWRITE_ERR_RET(MSR_BITMAP, m_MsrBitmapRegionPhysAddr);
+
+#ifdef ENABLE_EPT
+	VMWRITE_ERR_RET(SECONDARY_VM_EXEC_CONTROL,
+		VmxAdjustMsr(__readmsr(IA32_VMX_PROCBASED_CTLS2),
+			SECONDARY_EXEC_XSAVES | SECONDARY_EXEC_ENABLE_EPT | SECONDARY_EXEC_ENABLE_RDTSCP | SECONDARY_EXEC_ENABLE_VPID
+		));
+#else
+	VMWRITE_ERR_RET(SECONDARY_VM_EXEC_CONTROL,
+		VmxAdjustMsr(__readmsr(IA32_VMX_PROCBASED_CTLS2),
+			SECONDARY_EXEC_XSAVES | SECONDARY_EXEC_ENABLE_RDTSCP 
+		));
+#endif // ENABLE_EPT
+
+	VMWRITE_ERR_RET(PIN_BASED_VM_EXEC_CONTROL,
+		VmxAdjustMsr(__readmsr(MSR_IA32_VMX_TRUE_PINBASED_CTLS),
+			0 
+		));
+
+	// Enable the RDTSC event
+	VMWRITE_ERR_RET(CPU_BASED_VM_EXEC_CONTROL,
+		VmxAdjustMsr(__readmsr(MSR_IA32_VMX_PROCBASED_CTLS),
+			CPU_BASED_ACTIVATE_SECONDARY_CONTROLS | CPU_BASED_ACTIVATE_MSR_BITMAP
+		));
+
+
 
 
 	return TRUE;
