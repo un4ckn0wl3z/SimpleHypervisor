@@ -911,7 +911,7 @@ protected:
 	BOOLEAN CheakVTEnable();    
 	VOID SetVMExitHandler(ULONG_PTR HandlerEntryPoint, ULONG_PTR HandlerStack);
 	VOID GdtEntryToVmcsFormat(ULONG selector, ULONG_PTR* base, ULONG_PTR* limit, ULONG_PTR* rights);
-	BOOLEAN InitVMCS();
+	VOID InitVMCS();
 	VOID InitializeEPT();
 private:
 	ULONG m_CPU;

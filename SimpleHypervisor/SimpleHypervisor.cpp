@@ -10,7 +10,7 @@
 	if( (x) != 0 )\
 	{\
 		DbgPrintEx(77,0,"Debug:[%d]%s VMERR_RET!\n",m_CPU, s);\
-		return FALSE;\
+		return;\
 	}
 
 #define VMWRITE_ERR_RET(e,v)\
@@ -36,6 +36,11 @@ __forceinline unsigned char vmxptrld(ULONG_PTR* VmcsRegion)
 __forceinline unsigned char vmxwrite(VMCSFIELD Encoding, ULONG_PTR Value)
 {
 	return __vmx_vmwrite(Encoding, Value);
+}
+
+__forceinline unsigned char vmxlaunch()
+{
+	return __vmx_vmlaunch();
 }
 
 __forceinline ULONG_PTR VmxAdjustMsr(ULONG_PTR MsrValue, ULONG_PTR DesiredValue)
@@ -84,7 +89,7 @@ BOOLEAN SimpleHypervisor::Initialize()
  	m_VMXRootStackRegion = (ULONG_PTR)MmAllocateNonCachedMemory(3 * PAGE_SIZE);
 
 	if (m_VMXRootStackRegion) {
-		SetVMExitHandler((ULONG_PTR)VMExitHandler, m_VMXRootStackRegion + 0x2000);
+		SetVMExitHandler((ULONG_PTR)Asm_VMExitHandler, m_VMXRootStackRegion + 0x2000);
 	}
 
 	m_VMXOn = FALSE;
@@ -198,7 +203,7 @@ VOID SimpleHypervisor::GdtEntryToVmcsFormat(ULONG selector, ULONG_PTR* base, ULO
 }
 
 
-BOOLEAN SimpleHypervisor::InitVMCS()
+VOID SimpleHypervisor::InitVMCS()
 {
 	//VMX_EPTP EPTP;
 	ULONG_PTR base, limit, rights;
@@ -209,7 +214,7 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	if (m_VMXOn)
 	{
 		DbgPrintEx(77,0,"Debug:[%d] !\n", m_CPU);
-		return FALSE;
+		return;
 	}
 
  	m_VMXRegionPhysAddr = MmGetPhysicalAddress(m_VMXRegion).QuadPart;
@@ -262,7 +267,7 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 
  	//{
 	m_HostState.cr0 = __readcr0();
-	//m_HostState.cr3 = __readcr3();
+	m_HostState.cr3 = __readcr3();
 	m_HostState.cr4 = __readcr4();
 
 	m_HostState.cs = __readcs() & 0xF8;
@@ -337,7 +342,8 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 		VmxAdjustMsr(__readmsr(MSR_IA32_VMX_TRUE_ENTRY_CTLS),
 			VM_ENTRY_IA32E_MODE));
 
-	// Guest
+	// Guest Status
+
 	GdtEntryToVmcsFormat(m_GuestState.cs, &base, &limit, &rights);
 	VMWRITE_ERR_RET(GUEST_CS_SELECTOR, m_GuestState.cs);
 	VMWRITE_ERR_RET(GUEST_CS_LIMIT, limit);
@@ -384,7 +390,33 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	VMWRITE_ERR_RET(GUEST_TR_BASE, base);
 	m_HostState.trbase = base;
 
-	// Host
+	GdtEntryToVmcsFormat(m_GuestState.ldtr, &base, &limit, &rights);
+	VMWRITE_ERR_RET(GUEST_LDTR_SELECTOR, m_GuestState.ldtr);
+	VMWRITE_ERR_RET(GUEST_LDTR_LIMIT, limit);
+	VMWRITE_ERR_RET(GUEST_LDTR_AR_BYTES, rights);
+	VMWRITE_ERR_RET(GUEST_LDTR_BASE, base);
+
+	VMWRITE_ERR_RET(GUEST_GDTR_BASE, m_GuestState.gdt.ulBase);
+	VMWRITE_ERR_RET(GUEST_GDTR_LIMIT, m_GuestState.gdt.wLimit);
+
+	VMWRITE_ERR_RET(GUEST_IDTR_BASE, m_GuestState.idt.ulBase);
+	VMWRITE_ERR_RET(GUEST_IDTR_LIMIT, m_GuestState.idt.wLimit);
+
+	VMWRITE_ERR_RET(GUEST_CR0, m_GuestState.cr0);
+	VMWRITE_ERR_RET(GUEST_CR3, m_GuestState.cr3);
+	VMWRITE_ERR_RET(GUEST_CR4, m_GuestState.cr4);
+	VMWRITE_ERR_RET(CR0_READ_SHADOW, m_GuestState.cr0);
+	VMWRITE_ERR_RET(CR4_READ_SHADOW, m_GuestState.cr4);
+
+	VMWRITE_ERR_RET(GUEST_DR7, m_GuestState.dr7);
+	VMWRITE_ERR_RET(GUEST_IA32_DEBUGCTL, m_GuestState.msr_debugctl);
+
+	VMWRITE_ERR_RET(GUEST_RSP, m_GuestState.rsp);
+	VMWRITE_ERR_RET(GUEST_RIP, m_GuestState.rip);
+	VMWRITE_ERR_RET(GUEST_RFLAGS, m_GuestState.rflags);
+
+	// Host status
+
 	VMWRITE_ERR_RET(HOST_CS_SELECTOR, m_HostState.cs);
 	VMWRITE_ERR_RET(HOST_DS_SELECTOR, m_HostState.ds);
 	VMWRITE_ERR_RET(HOST_SS_SELECTOR, m_HostState.ss);
@@ -399,10 +431,25 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	VMWRITE_ERR_RET(HOST_TR_BASE, m_HostState.trbase);
 	VMWRITE_ERR_RET(HOST_TR_SELECTOR, m_HostState.tr);
 
+	VMWRITE_ERR_RET(GUEST_GDTR_BASE, m_HostState.gdt.ulBase);
+	VMWRITE_ERR_RET(GUEST_IDTR_BASE, m_HostState.idt.ulBase);
 
+	VMWRITE_ERR_RET(HOST_CR0, m_HostState.cr0);
+	VMWRITE_ERR_RET(HOST_CR3, m_HostState.cr3);
+	VMWRITE_ERR_RET(HOST_CR4, m_HostState.cr4);
+
+	VMWRITE_ERR_RET(HOST_RSP, m_HostState.rsp);
+	VMWRITE_ERR_RET(HOST_RIP, m_HostState.rip);
+
+	// Initialization of VMCS completed
+	DbgPrint("Debug:[%d] Prepare to start virtualization\n", m_CPU);
+	m_VMXOn = TRUE;
+	vmxlaunch();  // If this statement is executed successfully, it will not return
+
+	DbgPrint("Debug:[%d] It shouldn't be executed here \n", m_CPU);
 	__vmx_off();
 	m_VMXOn = FALSE;
-	return TRUE;
+	return;
 }
 
 VOID SimpleHypervisor::InitializeEPT()

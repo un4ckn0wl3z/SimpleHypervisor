@@ -1,6 +1,46 @@
 
 _ASM segment para 'CODE'
 
+SAVESTATE MACRO
+	push r15
+	mov r15,rsp
+	add r15,8
+	push r14
+	push r13
+	push r12
+	push r11
+	push r10
+	push r9
+	push r8
+	push rdi
+	push rsi
+	push rbp
+	push r15    ;rsp
+	push rbx
+	push rdx
+	push rcx
+	push rax
+ENDM
+
+LOADSTATE MACRO
+	pop rax
+	pop rcx
+	pop rdx
+	pop rbx
+	add rsp, 8
+	pop rbp
+	pop rsi
+	pop rdi
+	pop r8
+	pop r9
+	pop r10
+	pop r11
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+ENDM
+
 ALIGN 16
 
 __readcs PROC
@@ -79,6 +119,20 @@ Asm_NextInstructionPointer PROC
  mov rax, [rsp]
  ret
 Asm_NextInstructionPointer ENDP
+
+
+Asm_VMExitHandler PROC
+	cli
+	SAVESTATE
+
+	;Call ExitHandler
+
+	LOADSTATE
+	sti
+
+
+
+Asm_VMExitHandler ENDP
 
 _ASM ENDS
 END

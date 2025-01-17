@@ -12,3 +12,5 @@ EXTERN_C ULONG_PTR __readgs();
 EXTERN_C ULONG_PTR __sldt();
 EXTERN_C ULONG_PTR __str();
 EXTERN_C ULONG_PTR __sgdt(PGDT gdtr);
+
+EXTERN_C void Asm_VMExitHandler();
