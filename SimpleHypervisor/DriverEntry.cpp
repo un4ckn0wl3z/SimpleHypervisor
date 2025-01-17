@@ -1,4 +1,5 @@
 #include <ntifs.h>
+
 #include "SimpleHypervisor.h"
 
 SimpleHypervisor* VT_CPU[128];
@@ -11,18 +12,15 @@ void* __cdecl operator new(unsigned __int64 size)
 	return MmAllocateContiguousMemory(size, highest);
 }
 
-
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void __cdecl operator delete(void* p, size_t size)
 {
 	UNREFERENCED_PARAMETER(size);
-	if (p)
-	{
+	if (p) {
 		MmFreeContiguousMemory(p);
 		p = NULL;
 	}
 }
-
 
 EXTERN_C
 NTKERNELAPI
@@ -42,7 +40,6 @@ KeSignalCallDpcSynchronize(
 	_In_ PVOID SystemArgument2
 );
 
-
 EXTERN_C
 NTKERNELAPI
 _IRQL_requires_max_(APC_LEVEL)
@@ -53,7 +50,7 @@ KeGenericCallDpc(
 	_In_ PKDEFERRED_ROUTINE Routine,
 	_In_opt_ PVOID Context
 );
-
+//------------------------------------------
 
 VOID VTLoadProc(
 	_In_ struct _KDPC* Dpc,
@@ -62,10 +59,11 @@ VOID VTLoadProc(
 	_In_opt_ PVOID SystemArgument2
 )
 {
+	UNREFERENCED_PARAMETER(Dpc);
 	ULONG uCPU = KeGetCurrentProcessorNumber();
-	DbgPrintEx(77, 0, "Debug:CPU Number:------>: %d\r\n", uCPU);
+	DbgPrintEx(77,0,"Debug:CPU------>%d\n", uCPU);
 
-	VT_CPU[uCPU] = new SimpleHypervisor(uCPU); // beware leak
+	VT_CPU[uCPU] = new SimpleHypervisor(uCPU); 
 
 	if (VT_CPU[uCPU]->Initialize())
 	{
@@ -83,8 +81,10 @@ VOID VTUnLoadProc(
 	_In_opt_ PVOID SystemArgument2
 )
 {
+	UNREFERENCED_PARAMETER(Dpc);
 	ULONG uCPU = KeGetCurrentProcessorNumber();
-	DbgPrintEx(77, 0, "Debug:CPU Number:------>: %d\r\n", uCPU);
+	DbgPrintEx(77,0,"Debug:CPU------>%d\n", uCPU);
+
 
 	VT_CPU[uCPU]->UnInstall();
 
@@ -105,27 +105,28 @@ VOID VTLoad()
 	KeGenericCallDpc(VTLoadProc, NULL);
 }
 
-
 #ifdef __cplusplus
-EXTERN_C
-#endif // __cplusplus
-VOID VTUnload(PDRIVER_OBJECT DriverObject)
+extern "C"
+#endif
+VOID VTUnLoad(PDRIVER_OBJECT DriverObject)
 {
 	KeGenericCallDpc(VTUnLoadProc, NULL);
-	DbgPrintEx(77, 0, "Debug:VTUnload\r\n");
+
+	DbgPrintEx(77,0,"Debug:unloaded!\n");
 }
 
 #ifdef __cplusplus
-EXTERN_C
-#endif // __cplusplus
- NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
+extern "C"
+#endif
+NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegisterPath)
 {
-	UNREFERENCED_PARAMETER(RegistryPath);
-	DriverObject->DriverUnload = VTUnload;
+	UNREFERENCED_PARAMETER(RegisterPath);
+	DbgPrintEx(77,0,"Debug:loaded!\n");
+
+	DriverObject->DriverUnload = VTUnLoad;
+
 	VTLoad();
-
-	DbgPrintEx(77,0,"Debug:VTLoad\r\n");
-
 
 	return STATUS_SUCCESS;
 }
+

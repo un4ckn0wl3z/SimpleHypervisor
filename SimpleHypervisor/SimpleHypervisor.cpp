@@ -1,21 +1,21 @@
 #include <ntifs.h>
 #include <intrin.h>
+
 #include "SimpleHypervisor.h"
 #include "Asm.h"
 
 #define ENABLE_EPT
 
 #define VMERR_RET(x, s)\
-	if( (x) != 0)\
+	if( (x) != 0 )\
 	{\
-		DbgPrintEx(77, 0, "Debug: %s call is out of order\r\n", s);\
+		DbgPrintEx(77,0,"Debug:[%d]%s VMERR_RET!\n",m_CPU, s);\
 		return FALSE;\
-	}\
+	}
 
-
-#define VMWRITE_ERR_RET(e, v)\
-		DbgPrintEx(77, 0, "Debug: [vmwrite] %s: 0x%016llX\r\n", #e, v);\
-		VMERR_RET(vmwrite(e, v), "vmwrite - " #e)\
+#define VMWRITE_ERR_RET(e,v)\
+	DbgPrintEx(77,0,"Debug:[%d]%s:0x%016llX\n",m_CPU, #e, v);\
+	VMERR_RET(vmxwrite(e,v),"vmwrite - " #e);
 
 
 __forceinline unsigned char vmxon(ULONG_PTR* VmxRegion)
@@ -33,7 +33,7 @@ __forceinline unsigned char vmxptrld(ULONG_PTR* VmcsRegion)
 	return __vmx_vmptrld(VmcsRegion);
 }
 
-__forceinline unsigned char vmwrite(VMCSFIELD Encoding, ULONG_PTR Value)
+__forceinline unsigned char vmxwrite(VMCSFIELD Encoding, ULONG_PTR Value)
 {
 	return __vmx_vmwrite(Encoding, Value);
 }
@@ -45,60 +45,45 @@ __forceinline ULONG_PTR VmxAdjustMsr(ULONG_PTR MsrValue, ULONG_PTR DesiredValue)
 	return DesiredValue;
 }
 
-
-
 EXTERN_C
 BOOLEAN VMExitHandler(ULONG_PTR* Registers)
 {
-	// 
+	//
 	UNREFERENCED_PARAMETER(Registers);
 	return TRUE;
 }
 
-
 BOOLEAN SimpleHypervisor::Initialize()
 {
-	if (!CheckVTSupported())
+	if (!CheakVTSupported())
 	{
 		return FALSE;
 	}
 
-	if (!CheckVTEnable())
+	if (!CheakVTEnable())
 	{
 		return FALSE;
 	}
 
-	DbgPrintEx(77, 0, "Debug:CPU Support virtualization\r\n");
-
-	// Init VMX region mem
-
-	m_VMXRegion = (ULONG_PTR*)MmAllocateNonCachedMemory(PAGE_SIZE);
-	if (m_VMXRegion)
-	{
+	DbgPrintEx(77,0,"Debug:[%d]CPU DPC Init\n", m_CPU);
+ 	m_VMXRegion = (ULONG_PTR*)MmAllocateNonCachedMemory(PAGE_SIZE);
+	if (m_VMXRegion) {
 		RtlSecureZeroMemory(m_VMXRegion, PAGE_SIZE);
 	}
 
-	// Init VMCS
-
-	m_VMCSRegion = (ULONG_PTR*)MmAllocateNonCachedMemory(PAGE_SIZE);
-	if (m_VMCSRegion)
-	{
+ 	m_VMCSRegion = (ULONG_PTR*)MmAllocateNonCachedMemory(PAGE_SIZE);
+	if (m_VMCSRegion) {
 		RtlSecureZeroMemory(m_VMCSRegion, PAGE_SIZE);
 	}
 
-	// Init MSR BIT MAP
-
 	m_MsrBitmapRegion = (UINT8*)MmAllocateNonCachedMemory(PAGE_SIZE);
-	if (m_MsrBitmapRegion)
-	{
+	if (m_MsrBitmapRegion) {
 		RtlSecureZeroMemory(m_MsrBitmapRegion, PAGE_SIZE);
 	}
 
-	// Init VM MEM
-	m_VMXRootStackRegion = (ULONG_PTR)MmAllocateNonCachedMemory(3 * PAGE_SIZE);
+ 	m_VMXRootStackRegion = (ULONG_PTR)MmAllocateNonCachedMemory(3 * PAGE_SIZE);
 
-	if (m_VMXRootStackRegion)
-	{
+	if (m_VMXRootStackRegion) {
 		SetVMExitHandler((ULONG_PTR)VMExitHandler, m_VMXRootStackRegion + 0x2000);
 	}
 
@@ -107,81 +92,78 @@ BOOLEAN SimpleHypervisor::Initialize()
 	InitVMCS();
 
 	return TRUE;
-
 }
 
 VOID SimpleHypervisor::UnInitialize()
 {
+	if (m_VMXOn)
+	{
+ 		__vmx_off();
+		m_VMXOn = FALSE;
+	}
+
+	if (m_EPT)
+	{
+		MmFreeContiguousMemory(m_EPT);
+	}
+
 	if (m_VMXRegion)
 	{
 		MmFreeNonCachedMemory(m_VMXRegion, PAGE_SIZE);
-
 	}
 
 	if (m_VMCSRegion)
 	{
 		MmFreeNonCachedMemory(m_VMCSRegion, PAGE_SIZE);
-
 	}
 
 	if (m_MsrBitmapRegion)
 	{
 		MmFreeNonCachedMemory(m_MsrBitmapRegion, PAGE_SIZE);
-
 	}
 
 	if (m_VMXRootStackRegion)
 	{
 		MmFreeNonCachedMemory((PVOID)m_VMXRootStackRegion, 3 * PAGE_SIZE);
-
 	}
-
- }
-
+}
 
 BOOLEAN SimpleHypervisor::Install()
 {
+
 	return TRUE;
 }
 
 BOOLEAN SimpleHypervisor::UnInstall()
 {
+
 	return TRUE;
 }
 
-BOOLEAN SimpleHypervisor::CheckVTSupported()
+BOOLEAN SimpleHypervisor::CheakVTSupported()
 {
 	int ctx[4] = { 0 };
- 
-	// Check CPU Capacity
-	__cpuidex(ctx, 1, 0);
 
-	if ((ctx[2] && CPUID_1_ECX_VMX) == 0)
+ 	__cpuidex(ctx, 1, 0);
+
+	if ((ctx[2] & CPUID_1_ECX_VMX) == 0)
 	{
-		// Not support VT
-		return FALSE;
+ 		return FALSE;
 	}
 
 	return TRUE;
-
-
 }
 
-
-BOOLEAN SimpleHypervisor::CheckVTEnable()
+BOOLEAN SimpleHypervisor::CheakVTEnable()
 {
 	ULONG_PTR msr;
 	msr = __readmsr(IA32_FEATURE_CONTROL_CODE);
-	if ((msr & FEATURE_CONTROL_VMXON_ENABLED_OUTSIDE_SMX) == 0)
-	{
-		return FALSE;
-	}
 
+	if ((msr & FEATURE_CONTROL_VMXON_ENABLED_OUTSIDE_SMX) == 0)
+		return FALSE;
 
 	return TRUE;
-
 }
-
 
 VOID SimpleHypervisor::SetVMExitHandler(ULONG_PTR HandlerEntryPoint, ULONG_PTR HandlerStack)
 {
@@ -189,47 +171,64 @@ VOID SimpleHypervisor::SetVMExitHandler(ULONG_PTR HandlerEntryPoint, ULONG_PTR H
 	m_HostState.rsp = ROUNDUP(HandlerStack, PAGE_SIZE);
 
 	return VOID();
-
 }
+
+VOID SimpleHypervisor::GdtEntryToVmcsFormat(ULONG selector, ULONG_PTR* base, ULONG_PTR* limit, ULONG_PTR* rights)
+{
+	GDT gdtr;
+	PKGDTENTRY64 gdtEntry;
+
+ 	*base = *limit = *rights = 0;
+
+	if (selector == 0 || (selector & SELECTOR_TABLE_INDEX) != 0) {
+		*rights = 0x10000;	// unusable
+		return;
+	}
+
+	__sgdt(&gdtr);
+	gdtEntry = (PKGDTENTRY64)(gdtr.ulBase + (selector & ~(0x3)));
+
+	*limit = __segmentlimit(selector);
+	*base = ((gdtEntry->Bytes.BaseHigh << 24) | (gdtEntry->Bytes.BaseMiddle << 16) | (gdtEntry->BaseLow)) & 0xFFFFFFFF;
+	*base |= ((gdtEntry->Bits.Type & 0x10) == 0) ? ((uintptr_t)gdtEntry->BaseUpper << 32) : 0;
+	*rights = (gdtEntry->Bytes.Flags1) | (gdtEntry->Bytes.Flags2 << 8);
+	*rights |= (gdtEntry->Bits.Present) ? 0 : 0x10000;
+
+	return VOID();
+}
+
 
 BOOLEAN SimpleHypervisor::InitVMCS()
 {
-	// Guest status
+	//VMX_EPTP EPTP;
+	ULONG_PTR base, limit, rights;
+	//Guest
 	StackPointer = (ULONG_PTR)Asm_StackPointer();
 	ReturnAddress = (ULONG_PTR)Asm_NextInstructionPointer();
 
 	if (m_VMXOn)
 	{
-		DbgPrintEx(77, 0, "Debug:SimpleHypervisor is running: %d\r\n");
+		DbgPrintEx(77,0,"Debug:[%d] !\n", m_CPU);
 		return FALSE;
 	}
 
-	// Get physical address
-	m_VMXRegionPhysAddr = MmGetPhysicalAddress(m_VMXRegion).QuadPart;
+ 	m_VMXRegionPhysAddr = MmGetPhysicalAddress(m_VMXRegion).QuadPart;
 	m_VMCSRegionPhysAddr = MmGetPhysicalAddress(m_VMCSRegion).QuadPart;
 	m_MsrBitmapRegionPhysAddr = MmGetPhysicalAddress(m_MsrBitmapRegion).QuadPart;
 
-	DbgPrintEx(77, 
-		0, "Debug:[CPU:%d] -- [VMX] --------- VA: %016llX! ------ phy: %016llX!\r\n",m_CPU , m_VMXRegion, m_VMXRegionPhysAddr);
-	DbgPrintEx(77, 
-		0, "Debug:[CPU:%d] -- [VMCS] -------- VA: %016llX! ------ phy: %016llX!\r\n", m_CPU, m_VMCSRegion, m_VMCSRegionPhysAddr);
-	DbgPrintEx(77, 
-		0, "Debug:[CPU:%d] -- [MsrBitmap] --- VA: %016llX! ------ phy: %016llX!\r\n", m_CPU, m_MsrBitmapRegion, m_MsrBitmapRegionPhysAddr);
+	DbgPrintEx(77,0,"Debug:[%d]VMX------>va:0x%016llX     pa:0x%016llX!\n", m_CPU, m_VMXRegion, m_VMXRegionPhysAddr);
+	DbgPrintEx(77,0,"Debug:[%d]VMCS------>va:0x%016llX     pa:0x%016llX!\n", m_CPU, m_VMCSRegion, m_VMCSRegionPhysAddr);
+	DbgPrintEx(77,0,"Debug:[%d]MsrBitmap------>va:0x%016llX     pa:0x%016llX!\n", m_CPU, m_MsrBitmapRegion, m_MsrBitmapRegionPhysAddr);
 
-
-
-	// Check features
+	//Check Features
 	m_VmxBasic = __readmsr(IA32_VMX_BASIC_MSR_CODE);
 	m_VmxFeatureControl = __readmsr(IA32_FEATURE_CONTROL_CODE);
 
-	// Fill in version number
-
-	*(PULONG32)m_VMXRegion = (ULONG32)m_VmxBasic;
+ 	*(PULONG32)m_VMXRegion = (ULONG32)m_VmxBasic;
 	*(PULONG32)m_VMCSRegion = (ULONG32)m_VmxBasic;
 
-	// Enable VMX Config
-	// 
-	// { Init guest state
+ 
+	//{
 	m_GuestState.cs = __readcs();
 	m_GuestState.ds = __readds();
 	m_GuestState.ss = __readss();
@@ -245,30 +244,25 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	m_GuestState.rsp = StackPointer;
 
 	__sgdt(&(m_GuestState.gdt));
-
 	__sidt(&(m_GuestState.idt));
 
 	m_GuestState.cr3 = __readcr3();
 	m_GuestState.cr0 = ((__readcr0() & __readmsr(IA32_VMX_CR0_FIXED1)) | __readmsr(IA32_VMX_CR0_FIXED0));
-
 	m_GuestState.cr4 = ((__readcr4() & __readmsr(IA32_VMX_CR4_FIXED1)) | __readmsr(IA32_VMX_CR4_FIXED0));
-	m_GuestState.dr7 = __readdr(7);
 
+	m_GuestState.dr7 = __readdr(7);
 	m_GuestState.msr_debugctl = __readmsr(IA32_DEBUGCTL);
 	m_GuestState.msr_sysenter_cs = __readmsr(IA32_SYSENTER_CS);
 	m_GuestState.msr_sysenter_eip = __readmsr(IA32_SYSENTER_EIP);
 	m_GuestState.msr_sysenter_esp = __readmsr(IA32_SYSENTER_ESP);
-	// }
-	
+	//}
+
 	__writecr0(m_GuestState.cr0);
 	__writecr4(m_GuestState.cr4);
 
-	// Init host state
-
-	// {
-
+ 	//{
 	m_HostState.cr0 = __readcr0();
-	m_HostState.cr3 = __readcr3();
+	//m_HostState.cr3 = __readcr3();
 	m_HostState.cr4 = __readcr4();
 
 	m_HostState.cs = __readcs() & 0xF8;
@@ -277,52 +271,43 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 	m_HostState.es = __reades() & 0xF8;
 	m_HostState.fs = __readfs() & 0xF8;
 	m_HostState.gs = __readgs() & 0xF8;
-
 	m_HostState.tr = __str();
+
 	m_HostState.msr_sysenter_cs = __readmsr(IA32_SYSENTER_CS);
 	m_HostState.msr_sysenter_eip = __readmsr(IA32_SYSENTER_EIP);
 	m_HostState.msr_sysenter_esp = __readmsr(IA32_SYSENTER_ESP);
 
-
 	__sgdt(&(m_HostState.gdt));
-
 	__sidt(&(m_HostState.idt));
-
-	// }
+	//}
 
 #ifdef ENABLE_EPT
-	// Init EPT
-	InitializeEPT();
+ 	InitializeEPT();
+#endif //ENABLE_EPT
 
-#endif // ENABLE_EPT
-
-
-	// Setup VMX
+	//Setup VMX
 	VMERR_RET(vmxon(&m_VMXRegionPhysAddr), "vmxon");
-	DbgPrintEx(77, 0, "Debug: vmxon started successfully\r\n");
+	DbgPrintEx(77,0,"Debug:[%d]vmxon done\n", m_CPU);
 	m_VMXOn = TRUE;
 
 	VMERR_RET(vmxclear(&m_VMCSRegionPhysAddr), "vmxclear");
 	VMERR_RET(vmxptrld(&m_VMCSRegionPhysAddr), "vmxptrld");
-	DbgPrintEx(77, 0, "Debug: VMCS loaded successfully\r\n");
+	DbgPrintEx(77,0,"Debug:[%d]VMCS done\n", m_CPU);
 
-	// Setup VMCS
+	//Setup VMCS
 	VMWRITE_ERR_RET(VMCS_LINK_POINTER, 0xFFFFFFFFFFFFFFFFL);
 
 #ifdef ENABLE_EPT
+	m_EPTP.AsUlonglong = 0;
+	m_EPTP.u.PageWalkLength = 3;
+	m_EPTP.u.Type = MTRR_TYPE_WB;
+	m_EPTP.u.PageFrameNumber = ((MmGetPhysicalAddress(&(m_EPT->PML4T)).QuadPart)) / PAGE_SIZE;
 
-	m_EPTP->AsUlonglong = 0;
-	m_EPTP->u.PageWalkLength = 3;
-	m_EPTP->u.Type = MTRR_TYPE_WB;
-	m_EPTP->u.PageFrameNumber = MmGetPhysicalAddress(m_EPT->PML4T).QuadPart / PAGE_SIZE;
-	
-	VMWRITE_ERR_RET(EPT_POINTER, m_EPTP->AsUlonglong);
+	VMWRITE_ERR_RET(EPT_POINTER, m_EPTP.AsUlonglong);
 	VMWRITE_ERR_RET(VIRTUAL_PROCESSOR_ID, 1);
+#endif //ENABLE_EPT
 
-#endif // ENABLE_EPT
-
-	// VM Execution Control Fields
-	VMWRITE_ERR_RET(MSR_BITMAP, m_MsrBitmapRegionPhysAddr);
+ 	VMWRITE_ERR_RET(MSR_BITMAP, m_MsrBitmapRegionPhysAddr);
 
 #ifdef ENABLE_EPT
 	VMWRITE_ERR_RET(SECONDARY_VM_EXEC_CONTROL,
@@ -330,26 +315,93 @@ BOOLEAN SimpleHypervisor::InitVMCS()
 			SECONDARY_EXEC_XSAVES | SECONDARY_EXEC_ENABLE_EPT | SECONDARY_EXEC_ENABLE_RDTSCP | SECONDARY_EXEC_ENABLE_VPID
 		));
 #else
-	VMWRITE_ERR_RET(SECONDARY_VM_EXEC_CONTROL,
+ 	VMWRITE_ERR_RET(SECONDARY_VM_EXEC_CONTROL,
 		VmxAdjustMsr(__readmsr(IA32_VMX_PROCBASED_CTLS2),
-			SECONDARY_EXEC_XSAVES | SECONDARY_EXEC_ENABLE_RDTSCP 
-		));
-#endif // ENABLE_EPT
+			SECONDARY_EXEC_XSAVES | SECONDARY_EXEC_ENABLE_RDTSCP));
+#endif //ENABLE_EPT
 
 	VMWRITE_ERR_RET(PIN_BASED_VM_EXEC_CONTROL,
-		VmxAdjustMsr(__readmsr(MSR_IA32_VMX_TRUE_PINBASED_CTLS),
-			0 
-		));
+		VmxAdjustMsr(__readmsr(MSR_IA32_VMX_TRUE_PINBASED_CTLS), 0));   
 
-	// Enable the RDTSC event
 	VMWRITE_ERR_RET(CPU_BASED_VM_EXEC_CONTROL,
-		VmxAdjustMsr(__readmsr(MSR_IA32_VMX_PROCBASED_CTLS),
-			CPU_BASED_ACTIVATE_SECONDARY_CONTROLS | CPU_BASED_ACTIVATE_MSR_BITMAP
-		));
+		VmxAdjustMsr(__readmsr(MSR_IA32_VMX_TRUE_PROCBASED_CTLS),
+			CPU_BASED_ACTIVATE_SECONDARY_CONTROLS | CPU_BASED_ACTIVATE_MSR_BITMAP));  
+
+	//VM Exit && VM Entry Control Fields
+
+	VMWRITE_ERR_RET(VM_EXIT_CONTROLS,
+		VmxAdjustMsr(__readmsr(MSR_IA32_VMX_TRUE_EXIT_CTLS),
+			VM_EXIT_IA32E_MODE | VM_EXIT_ACK_INTR_ON_EXIT));
+
+	VMWRITE_ERR_RET(VM_ENTRY_CONTROLS,
+		VmxAdjustMsr(__readmsr(MSR_IA32_VMX_TRUE_ENTRY_CTLS),
+			VM_ENTRY_IA32E_MODE));
+
+	// Guest
+	GdtEntryToVmcsFormat(m_GuestState.cs, &base, &limit, &rights);
+	VMWRITE_ERR_RET(GUEST_CS_SELECTOR, m_GuestState.cs);
+	VMWRITE_ERR_RET(GUEST_CS_LIMIT, limit);
+	VMWRITE_ERR_RET(GUEST_CS_AR_BYTES, rights);
+	VMWRITE_ERR_RET(GUEST_CS_BASE, base);
+
+	GdtEntryToVmcsFormat(m_GuestState.ds, &base, &limit, &rights);
+	VMWRITE_ERR_RET(GUEST_DS_SELECTOR, m_GuestState.ds);
+	VMWRITE_ERR_RET(GUEST_DS_LIMIT, limit);
+	VMWRITE_ERR_RET(GUEST_DS_AR_BYTES, rights);
+	VMWRITE_ERR_RET(GUEST_DS_BASE, base);
+
+	GdtEntryToVmcsFormat(m_GuestState.ss, &base, &limit, &rights);
+	VMWRITE_ERR_RET(GUEST_SS_SELECTOR, m_GuestState.ss);
+	VMWRITE_ERR_RET(GUEST_SS_LIMIT, limit);
+	VMWRITE_ERR_RET(GUEST_SS_AR_BYTES, rights);
+	VMWRITE_ERR_RET(GUEST_SS_BASE, base);
+
+	GdtEntryToVmcsFormat(m_GuestState.es, &base, &limit, &rights);
+	VMWRITE_ERR_RET(GUEST_ES_SELECTOR, m_GuestState.es);
+	VMWRITE_ERR_RET(GUEST_ES_LIMIT, limit);
+	VMWRITE_ERR_RET(GUEST_ES_AR_BYTES, rights);
+	VMWRITE_ERR_RET(GUEST_ES_BASE, base);
+
+	GdtEntryToVmcsFormat(m_GuestState.fs, &base, &limit, &rights);
+	VMWRITE_ERR_RET(GUEST_FS_SELECTOR, m_GuestState.fs);
+	VMWRITE_ERR_RET(GUEST_FS_LIMIT, limit);
+	VMWRITE_ERR_RET(GUEST_FS_AR_BYTES, rights);
+	VMWRITE_ERR_RET(GUEST_FS_BASE, base);
+	m_HostState.fsbase = base;
+
+	GdtEntryToVmcsFormat(m_GuestState.gs, &base, &limit, &rights);
+	base = __readmsr(MSR_GS_BASE);
+	VMWRITE_ERR_RET(GUEST_GS_SELECTOR, m_GuestState.gs);
+	VMWRITE_ERR_RET(GUEST_GS_LIMIT, limit);
+	VMWRITE_ERR_RET(GUEST_GS_AR_BYTES, rights);
+	VMWRITE_ERR_RET(GUEST_GS_BASE, base);
+	m_HostState.gsbase = base;
+
+	GdtEntryToVmcsFormat(m_GuestState.tr, &base, &limit, &rights);
+	VMWRITE_ERR_RET(GUEST_TR_SELECTOR, m_GuestState.tr);
+	VMWRITE_ERR_RET(GUEST_TR_LIMIT, limit);
+	VMWRITE_ERR_RET(GUEST_TR_AR_BYTES, rights);
+	VMWRITE_ERR_RET(GUEST_TR_BASE, base);
+	m_HostState.trbase = base;
+
+	// Host
+	VMWRITE_ERR_RET(HOST_CS_SELECTOR, m_HostState.cs);
+	VMWRITE_ERR_RET(HOST_DS_SELECTOR, m_HostState.ds);
+	VMWRITE_ERR_RET(HOST_SS_SELECTOR, m_HostState.ss);
+	VMWRITE_ERR_RET(HOST_ES_SELECTOR, m_HostState.es);
+
+	VMWRITE_ERR_RET(HOST_FS_BASE, m_HostState.fsbase);
+	VMWRITE_ERR_RET(HOST_FS_SELECTOR, m_HostState.fs);
+
+	VMWRITE_ERR_RET(HOST_GS_BASE, m_HostState.gsbase);
+	VMWRITE_ERR_RET(HOST_GS_SELECTOR, m_HostState.gs);
+
+	VMWRITE_ERR_RET(HOST_TR_BASE, m_HostState.trbase);
+	VMWRITE_ERR_RET(HOST_TR_SELECTOR, m_HostState.tr);
 
 
-
-
+	__vmx_off();
+	m_VMXOn = FALSE;
 	return TRUE;
 }
 
@@ -359,112 +411,87 @@ VOID SimpleHypervisor::InitializeEPT()
 	MTRR_CAPABILITIES mtrrCapabilities;
 	MTRR_VARIABLE_BASE mtrrBase;
 	MTRR_VARIABLE_MASK mtrrMask;
-	SHV_MTRR_RANGE mtrrData[16];
 
+	SHV_MTRR_RANGE   mtrrData[16];
 	int i = 0;
 	int j = 0;
-
 	unsigned long bit = 0;
+
 	ULONG_PTR LargePageAddress = 0;
-	ULONG CandidateMemoryType = 0;
+	ULONG_PTR CandidateMemoryType = 0;
 
 	highest.QuadPart = 0xFFFFFFFFFFFFFFFF;
-
 	m_EPT = (PVMX_EPT)MmAllocateContiguousMemory(sizeof(VMX_EPT), highest);
-
 	if (!m_EPT)
 	{
+		DbgPrintEx(77,0,"Debug:[%d] EPT !\n", m_CPU);
 		return;
 	}
 
 	RtlSecureZeroMemory(m_EPT, sizeof(VMX_EPT));
-	DbgPrintEx(77, 0, "Debug:[%d]EPT Memory:------->%p\r\n", m_CPU, m_EPT);
+	DbgPrintEx(77,0,"Debug:[%d]EPT ------>%p\n", m_CPU, m_EPT);
 
-
-	// Reading the mtrr addressing range
-	mtrrCapabilities.AsUlonglong = __readmsr(MTRR_MSR_CAPABILITIES);
-	DbgPrintEx(77, 0, "Debug:[%d]mtrrCapabilities:------->0x%016llX\r\n", m_CPU, mtrrCapabilities.AsUlonglong);
-	DbgPrintEx(77, 0, "Debug:[%d]mtrrCapabilities.u.VarCnt:------->0x%X\r\n", m_CPU, mtrrCapabilities.u.VarCnt);
-
-
+ 	mtrrCapabilities.AsUlonglong = __readmsr(MTRR_MSR_CAPABILITIES);
+	DbgPrintEx(77,0,"Debug:[%d]mtrrCapabilities------>0x%016llX\n", m_CPU, mtrrCapabilities.AsUlonglong);
+	DbgPrintEx(77,0,"Debug:[%d]mtrrCapabilities.u.VarCnt------>0x%X\n", m_CPU, mtrrCapabilities.u.VarCnt);
 	for (i = 0; i < mtrrCapabilities.u.VarCnt; i++)
 	{
 		mtrrBase.AsUlonglong = __readmsr(MTRR_MSR_VARIABLE_BASE + i * 2);
 		mtrrMask.AsUlonglong = __readmsr(MTRR_MSR_VARIABLE_MASK + i * 2);
 
-		mtrrData[i].Type = mtrrBase.u.Type;
-		mtrrData[i].Enabled = mtrrMask.u.Enabled;
-		if (mtrrData[i].Enabled != FALSE)
+		mtrrData[i].Type = (UINT32)mtrrBase.u.Type;
+		mtrrData[i].Enabled = (UINT32)mtrrMask.u.Enabled;
+ 		if (mtrrData[i].Enabled != FALSE)
 		{
-			// Set Base Address
-			mtrrData[i].PhysicalAddressMin = mtrrBase.u.PhysBase * MTRR_PAGE_SIZE;
+ 			mtrrData[i].PhysicalAddressMin = mtrrBase.u.PhysBase * MTRR_PAGE_SIZE;
 
 			_BitScanForward64(&bit, mtrrMask.u.PhysMask * MTRR_PAGE_SIZE);
 			mtrrData[i].PhysicalAddressMax = mtrrData[i].PhysicalAddressMin + (1ULL << bit) - 1;
-
 		}
 	}
 
-	// Prepare item to fill in EPT content
-
-	m_EPT->PML4T[0].u.Read = 1;
+ 	m_EPT->PML4T[0].u.Read = 1;
 	m_EPT->PML4T[0].u.Write = 1;
 	m_EPT->PML4T[0].u.Execute = 1;
-	m_EPT->PML4T[0].u.PageFrameNumber = (MmGetPhysicalAddress(m_EPT->PDPT)).QuadPart / PAGE_SIZE;
-
-	DbgPrintEx(77, 0, "Debug:[%d]PML4E[0].u.PageFrameNumber:------->0x%016llX\r\n", m_CPU, m_EPT->PML4T[0].u.PageFrameNumber);
-
-
+	m_EPT->PML4T[0].u.PDPTAddress = MmGetPhysicalAddress(&m_EPT->PDPT).QuadPart / PAGE_SIZE;
+ 
 	for (i = 0; i < PDPTE_ENTRY_COUNT; i++)
 	{
-		// Fill-in page count for PDPT
-		m_EPT->PDPT[i].u.Read = 1;
+ 		m_EPT->PDPT[i].u.Read = 1;
 		m_EPT->PDPT[i].u.Write = 1;
 		m_EPT->PDPT[i].u.Execute = 1;
-		m_EPT->PDPT[i].u.PageFrameNumber = (MmGetPhysicalAddress(&m_EPT->PDT[i][0])).QuadPart / PAGE_SIZE;
+		m_EPT->PDPT[i].u.PDTAddress = MmGetPhysicalAddress(&m_EPT->PDT[i][0]).QuadPart / PAGE_SIZE;
 	}
 
 	for (i = 0; i < PDPTE_ENTRY_COUNT; i++)
 	{
-		// Build every 2M of EPT as one page
-		for (j = 0; j < PDE_ENTRY_COUNT; j++) 
+ 		for (j = 0; j < PDE_ENTRY_COUNT; j++)
 		{
 			m_EPT->PDT[i][j].u.Read = 1;
 			m_EPT->PDT[i][j].u.Write = 1;
 			m_EPT->PDT[i][j].u.Execute = 1;
 			m_EPT->PDT[i][j].u.Large = 1;
-			m_EPT->PDT[i][j].u.PageFrameNumber = (i * 512) + j;
+			m_EPT->PDT[i][j].u.PTAddress = (i * 512) + j;
 
-			LargePageAddress = m_EPT->PDT[i][j].u.PageFrameNumber * _2MB;
+			LargePageAddress = m_EPT->PDT[i][j].u.PTAddress * _2MB;
 
 			CandidateMemoryType = MTRR_TYPE_WB;
 
 			for (int k = 0; k < sizeof(mtrrData) / sizeof(mtrrData[0]); k++)
 			{
-				// check memory enabled
-				if (mtrrData[k].Enabled != FALSE)
+ 				if (mtrrData[k].Enabled != FALSE)
 				{
-					// Check boundary
-					if ( ((LargePageAddress + _2MB) >= mtrrData[k].PhysicalAddressMin) &&
-						   (LargePageAddress <= mtrrData[k].PhysicalAddressMax)
-						)
+ 					if (((LargePageAddress + _2MB) >= mtrrData[k].PhysicalAddressMin) &&
+						(LargePageAddress <= mtrrData[k].PhysicalAddressMax))
 					{
-						// Change type
-						CandidateMemoryType = mtrrData[k].Type;
-
+ 						CandidateMemoryType = mtrrData[k].Type;
 					}
-
 				}
-
 			}
 
 			m_EPT->PDT[i][j].u.Type = CandidateMemoryType;
-
 		}
 	}
 
-
-
-
-
+	DbgPrintEx(77,0,"Debug:[%d] EPT !\n", m_CPU);
 }

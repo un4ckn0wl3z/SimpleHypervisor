@@ -1,412 +1,64 @@
 #pragma once
 
-typedef struct _CPUID_ECX
-{
-	unsigned SSE3 : 1;
-	unsigned PCLMULQDQ : 1;
-	unsigned DTES64 : 1;
-	unsigned MONITOR : 1;
-	unsigned DS_CPL : 1;
-	unsigned VMX : 1;
-	unsigned SMX : 1;
-	unsigned EIST : 1;
-	unsigned TM2 : 1;
-	unsigned SSSE3 : 1;
-	unsigned Reserved : 22;
-	unsigned Reserved_64 : 32;
-}CPUID_ECX;
-
 /* CPUID */
 // {
 #define CPUID_1_ECX_VMX (1<<5)
 // }
 
+/* CR3 */
+// {
+#define CR3_PWT (1 << 3)    /**< Page-level Writes Transparent */
+#define CR3_PCD (1 << 4)    /**< Page-level Cache Disable */
+// }
 
-/* MSRs */
-#define IA32_FEATURE_CONTROL_CODE		        0x03A
-#define IA32_SYSENTER_CS                        0x174
-#define IA32_SYSENTER_ESP                       0x175
-#define IA32_SYSENTER_EIP                       0x176
-#define IA32_DEBUGCTL                           0x1D9
-#define IA32_VMX_BASIC_MSR_CODE			        0x480
-#define IA32_VMX_PINBASED_CTLS                  0x481
-#define IA32_VMX_PROCBASED_CTLS                 0x482
-#define IA32_VMX_EXIT_CTLS                      0x483
-#define IA32_VMX_ENTRY_CTLS                     0x484
-#define IA32_VMX_MISC                           0x485
-#define IA32_VMX_CR0_FIXED0                     0x486
-#define IA32_VMX_CR0_FIXED1                     0x487
-#define IA32_VMX_CR4_FIXED0                     0x488
-#define IA32_VMX_CR4_FIXED1                     0x489
-#define	IA32_FS_BASE    						0xc0000100
-#define	IA32_GS_BASE							0xc0000101
-#define IA32_VMX_PROCBASED_CTLS2				0x0000048B
+/* CR4 */
+// {
+#define CR3_PWT (1 << 3)    /**< Page-level Writes Transparent */
+#define CR3_PCD (1 << 4)    /**< Page-level Cache Disable */
 
-#define MSR_IA32_VMX_BASIC                      0x480
-#define MSR_IA32_VMX_PINBASED_CTLS              0x481
-#define MSR_IA32_VMX_PROCBASED_CTLS             0x482
-#define MSR_IA32_VMX_EXIT_CTLS                  0x483
-#define MSR_IA32_VMX_ENTRY_CTLS                 0x484
-#define MSR_IA32_VMX_MISC                       0x485
-#define MSR_IA32_VMX_CR0_FIXED0                 0x486
-#define MSR_IA32_VMX_CR0_FIXED1                 0x487
-#define MSR_IA32_VMX_CR4_FIXED0                 0x488
-#define MSR_IA32_VMX_CR4_FIXED1                 0x489
-#define MSR_IA32_VMX_VMCS_ENUM                  0x48a
-#define MSR_IA32_VMX_PROCBASED_CTLS2            0x48b
-#define MSR_IA32_VMX_EPT_VPID_CAP               0x48c
-#define MSR_IA32_VMX_TRUE_PINBASED_CTLS         0x48d
-#define MSR_IA32_VMX_TRUE_PROCBASED_CTLS        0x48e
-#define MSR_IA32_VMX_TRUE_EXIT_CTLS             0x48f
-#define MSR_IA32_VMX_TRUE_ENTRY_CTLS            0x490
+#define CR4_VME (1 << 0)    /**< Virtual-8086 Mode Extensions */
+#define CR4_PVI (1 << 1)    /**< Protected-mode Virtual Interrupt */
+#define CR4_TSD (1 << 2)    /**< Time Stamp Disable */
+#define CR4_DE  (1 << 3)    /**< Debugging Extensions */
+#define CR4_PSE (1 << 4)    /**< Page Size Extensions */
+#define CR4_PAE (1 << 5)    /**< Physical Address Extension */
+#define CR4_MCE (1 << 6)    /**< Machine Check Enable */
+#define CR4_PGE (1 << 7)    /**< Page Global Enable */
+#define CR4_PCE (1 << 8)    /**< Performance-monitoring Counter Enable */
+#define CR4_OSFXSR (1 << 9) /**< Operating System Support FXSAVE/FXSTOR */
+/** Operating System Support for Unmasked SIMD Floating-Point Exceptions
+*
+* @note Intel's naming convention has gotten out of hand.
+*/
+#define CR4_OSXMMEXCPT (1 << 10)
+#define CR4_VMXE (1 << 13)  /**< Virtual-Machine eXtensions Enable */
+#define CR4_SMXE (1 << 14)  /**< Safer-Mode eXtensions Enable */
+// }
 
-#define MSR_IA32_MTRRCAP			0xfe
-#define MSR_IA32_MTRR_DEF_TYPE			0x2ff
-#define MSR_IA32_MTRR_PHYSBASE(n)		(0x200 + 2*(n))
-#define MSR_IA32_MTRR_PHYSMASK(n)		(0x200 + 2*(n) + 1)
-#define MSR_IA32_MTRR_FIX64K_00000		0x250
-#define MSR_IA32_MTRR_FIX16K_80000		0x258
-#define MSR_IA32_MTRR_FIX16K_A0000		0x259
-#define MSR_IA32_MTRR_FIX4K_C0000		0x268
-#define MSR_IA32_MTRR_FIX4K_C8000		0x269
-#define MSR_IA32_MTRR_FIX4K_D0000		0x26a
-#define MSR_IA32_MTRR_FIX4K_D8000		0x26b
-#define MSR_IA32_MTRR_FIX4K_E0000		0x26c
-#define MSR_IA32_MTRR_FIX4K_E8000		0x26d
-#define MSR_IA32_MTRR_FIX4K_F0000		0x26e
-#define MSR_IA32_MTRR_FIX4K_F8000		0x26f
-#define MSR_GS_BASE 0xC0000101
+/* CR0 */
+// {
+#define CR0_PE  (1 << 0)    /**< Protection Enable */
+#define CR0_MP  (1 << 1)    /**< Monitor coProcessor (FPU) */
+#define CR0_EM  (1 << 2)    /**< EMulation (FPU) */
+#define CR0_TS  (1 << 3)    /**< Task Switched */
+#define CR0_ET  (1 << 4)    /**< Extension Type (FPU) */
+#define CR0_NE  (1 << 5)    /**< Numeric Error */
+#define CR0_WP  (1 << 16)   /**< Write Protect */
+/** Alignment Mask.
+*
+* @note On to enable alignment checks.  This is not the only relevant
+*       bit for alignment checking -- see EFLAGS:AM.
+*/
+#define CR0_AM  (1 << 18)
+#define CR0_NW  (1 << 29)   /**< Not Write-through */
+#define CR0_CD  (1 << 30)   /**< Cache Disable */
+#define CR0_PG  (1 << 31)   /**< PaGing */
+// }
 
-//------------------------------------------
-#define FEATURE_CONTROL_LOCKED	(1 << 0)
-#define FEATURE_CONTROL_VMXON_ENABLED_INSIDE_SMX	(1 << 1)
-#define FEATURE_CONTROL_VMXON_ENABLED_OUTSIDE_SMX	(1 << 2)
-
-
-#define ROUNDUP(x,align) ((x + align - 1) & ~(align - 1))
-
-//------------------------------------------
-/* GDT */
-typedef struct _GDT {
-	USHORT wLimit;
-	ULONG_PTR ulBase;
-} GDT, * PGDT;
-
-/* IDT */
-typedef struct _IDT {
-	USHORT wLimit;
-	ULONG_PTR ulBase;
-} IDT, * PIDT;
-
-typedef struct _HOST_STATE {
-	ULONG_PTR cr0;
-	ULONG_PTR cr3;
-	ULONG_PTR cr4;
-	ULONG_PTR rsp;
-	ULONG_PTR rip;
-	ULONG_PTR cs;
-	ULONG_PTR ds;
-	ULONG_PTR ss;
-	ULONG_PTR es;
-	ULONG_PTR fs;
-	ULONG_PTR gs;
-	ULONG_PTR tr;
-	ULONG_PTR fsbase;
-	ULONG_PTR gsbase;
-	ULONG_PTR trbase;
-	GDT gdt;
-	IDT idt;
-	ULONG_PTR msr_sysenter_cs;
-	ULONG_PTR msr_sysenter_esp;
-	ULONG_PTR msr_sysenter_eip;
-} HOST_STATE, * PHOST_STATE;
-
-typedef struct _GUEST_STATE {
-	ULONG_PTR cs;
-	ULONG_PTR ds;
-	ULONG_PTR ss;
-	ULONG_PTR es;
-	ULONG_PTR fs;
-	ULONG_PTR gs;
-	GDT gdt;
-	IDT idt;
-	ULONG_PTR ldtr;
-	ULONG_PTR tr;
-	ULONG_PTR rsp;
-	ULONG_PTR rip;
-	ULONG_PTR rflags;
-	ULONG_PTR cr0;
-	ULONG_PTR cr4;
-	ULONG_PTR cr3;
-	ULONG_PTR dr7;
-	ULONG_PTR msr_debugctl;
-	ULONG_PTR msr_sysenter_cs;
-	ULONG_PTR msr_sysenter_eip;
-	ULONG_PTR msr_sysenter_esp;
-
-	ULONG_PTR msr_perf_global_ctrl;
-	ULONG_PTR msr_pat;
-	ULONG_PTR msr_efer;
-	ULONG_PTR msr_bndcfgs;
-} GUEST_STATE, * PGUEST_STATE;
-//---------------------------------------
-#pragma pack(push,1)
-// EPTP Struct
-typedef struct _VMX_EPTP
-{
-	union
-	{
-		struct
-		{
-			UINT64 Type : 3;
-			UINT64 PageWalkLength : 3;
-			UINT64 EnableAccessAndDirtyFlags : 1;
-			UINT64 Reserved : 5;
-			UINT64 PageFrameNumber : 36;
-			UINT64 ReservedHigh : 16;
-		}u;
-
-		UINT64 AsUlonglong;
-	};
-
-
-}VMX_EPTP, * PVMX_EPTP;
-static_assert(sizeof(VMX_EPTP) == sizeof(UINT64), "EPTP Size Mismatch");
-
-// PML4E Struct
-typedef struct _VMX_PML4E
-{
-	union
-	{
-		struct
-		{
-			UINT64 Read : 1;
-			UINT64 Write : 1;
-			UINT64 Execute : 1;
-			UINT64 Reserved : 5;
-			UINT64 Accessed : 1;
-			UINT64 SofewareUse : 1;
-			UINT64 UserModeExecute : 1;
-			UINT64 SofewareUse2 : 1;
-			UINT64 PageFrameNumber : 36;
-			UINT64 ReservedHigh : 4;
-			UINT64 SofewareUseHigh : 12;
-		}u;
-
-		UINT64 AsUlonglong;
-	};
-
-}VMX_PML4E, * PVMX_PML4E;
-static_assert(sizeof(VMX_PML4E) == sizeof(UINT64), "PML4E Size Mismatch");
-
-// HUGE_PDPTE Struct
-typedef struct _VMX_HUGE_PDPTE
-{
-	union
-	{
-		struct
-		{
-			UINT64 Read : 1;  //0
-			UINT64 Write : 1; //1
-			UINT64 Execute : 1;  //2
-			UINT64 Type : 3;     //5:3
-			UINT64 IgnorePat : 1;//6
-			UINT64 Large : 1;    //7
-			UINT64 Accessed : 1; //8
-			UINT64 Dirty : 1;    //9
-			UINT64 UserModeExecute : 1;//10
-			UINT64 SofewareUse : 1;    //11
-			UINT64 Reserved : 18;   //29:12
-			UINT64 PageFrameNumber : 18; //(N-1):30
-			UINT64 ReservedHigh : 4;
-			UINT64 SoftworeUseHigh : 11;
-			UINT64 SuppressVme : 1;
-		}u;
-
-		UINT64 AsUlonglong;
-	};
-
-}VMX_HUGE_PDPTE, * PVMX_HUGE_PDPTE;
-static_assert(sizeof(VMX_HUGE_PDPTE) == sizeof(UINT64), "HUGE_PDPTE Size Mismatch");
-
-// PDPTE Struct
-typedef struct _VMX_PDPTE
-{
-	union
-	{
-		struct
-		{
-			UINT64 Read : 1;  //0
-			UINT64 Write : 1; //1
-			UINT64 Execute : 1;  //2
-			UINT64 Reserved : 5; //7:3
-			UINT64 Accessed : 1; //8
-			UINT64 SoftwareUse : 1; //9
-			UINT64 UserModeExecute : 1;//10
-			UINT64 SofewareUse2 : 1;    //11
-			UINT64 PageFrameNumber : 36;
-			UINT64 ReservedHigh : 4;
-			UINT64 SoftworeUseHigh : 12; //63:52
-		}u;
-
-		UINT64 AsUlonglong;
-	};
-
-}VMX_PDPTE, * PVMX_PDPTE;
-static_assert(sizeof(VMX_PDPTE) == sizeof(UINT64), "PDPTE Size Mismatch");
-
-// LARGE_PDE Struct
-typedef struct _VMX_LARGE_PDE
-{
-	union
-	{
-		struct
-		{
-			UINT64 Read : 1;  //0
-			UINT64 Write : 1; //1
-			UINT64 Execute : 1;  //2
-			UINT64 Type : 3;     //5:3
-			UINT64 IgnorePat : 1;//6
-			UINT64 Large : 1;    //7
-			UINT64 Accessed : 1; //8
-			UINT64 Dirty : 1;    //9
-			UINT64 UserModeExecute : 1;//10
-			UINT64 SofewareUse : 1;    //11
-			UINT64 Reserved : 9;   //20:12
-			UINT64 PageFrameNumber : 27; //(N-1):21
-			UINT64 ReservedHigh : 4;
-			UINT64 SoftworeUseHigh : 11; //62:52
-			UINT64 SuppressVme : 1;
-		}u;
-
-		UINT64 AsUlonglong;
-	};
-
-}VMX_LARGE_PDE, * PVMX_LARGE_PDE;
-static_assert(sizeof(VMX_LARGE_PDE) == sizeof(UINT64), "LARGE_PDE Size Mismatch");
-
-// PDE Struct
-typedef struct _VMX_PDE
-{
-	union
-	{
-		struct
-		{
-			UINT64 Read : 1;  //0
-			UINT64 Write : 1; //1
-			UINT64 Execute : 1;  //2
-			UINT64 Reserved : 4;     //6:3
-			UINT64 Small : 1;    //7
-			UINT64 Accessed : 1; //8
-			UINT64 SofewareUse : 1;    //9
-			UINT64 UserModeExecute : 1;//10
-			UINT64 SofewareUse2 : 1;   //11
-			UINT64 PageFrameNumber : 36; //(N-1):12
-			UINT64 ReservedHigh : 4;
-			UINT64 SoftworeUseHigh : 12; //63:52
-		}u;
-
-		UINT64 AsUlonglong;
-	};
-
-}VMX_PDE, * PVMX_PDE;
-static_assert(sizeof(VMX_PDE) == sizeof(UINT64), "PDE Size Mismatch");
-
-
-#define PML4E_ENTRY_COUNT 512
-#define PDPTE_ENTRY_COUNT 512
-#define PDE_ENTRY_COUNT   512
-
-typedef struct _VMX_EPT
-{
-	DECLSPEC_ALIGN(PAGE_SIZE) VMX_PML4E PML4T[PML4E_ENTRY_COUNT];
-	DECLSPEC_ALIGN(PAGE_SIZE) VMX_PDPTE PDPT[PDPTE_ENTRY_COUNT];
-	DECLSPEC_ALIGN(PAGE_SIZE) VMX_LARGE_PDE PDT[PDPTE_ENTRY_COUNT][PDE_ENTRY_COUNT];
-}VMX_EPT, * PVMX_EPT;
-
-typedef struct _MTRR_CAPABILITIES
-{
-	union
-	{
-		struct
-		{
-			UINT64 VarCnt : 8;
-			UINT64 FixedSupported : 1;
-			UINT64 Reserved : 1;
-			UINT64 WcSupported : 1;
-			UINT64 SmrrSupported : 1;
-			UINT64 Reserved2 : 52;
-		}u;
-
-		UINT64 AsUlonglong;
-	};
-}MTRR_CAPABILITIES, * PMTRR_CAPABILITIES;
-static_assert(sizeof(MTRR_CAPABILITIES) == sizeof(UINT64), "MTRR_CAPABILITIES Size Mismatch");
-
-typedef struct _MTRR_VARIABLE_BASE
-{
-	union
-	{
-		struct
-		{
-			UINT64 Type : 8;
-			UINT64 Reserved : 4;
-			UINT64 PhysBase : 36;
-			UINT64 Reserved2 : 16;
-		}u;
-
-		UINT64 AsUlonglong;
-	};
-}MTRR_VARIABLE_BASE, * PMTRR_VARIABLE_BASE;
-static_assert(sizeof(MTRR_VARIABLE_BASE) == sizeof(UINT64), "MTRR_VARIABLE_BASE Size Mismatch");
-
-typedef struct _MTRR_VARIABLE_MASK
-{
-	union
-	{
-		struct
-		{
-			UINT64 Reserved : 11;
-			UINT64 Enabled : 1;
-			UINT64 PhysMask : 36;
-			UINT64 Reserved2 : 16;
-		}u;
-
-		UINT64 AsUlonglong;
-	};
-}MTRR_VARIABLE_MASK, * PMTRR_VARIABLE_MASK;
-C_ASSERT(sizeof(MTRR_VARIABLE_MASK) == sizeof(UINT64));
-//static_assert(sizeof(MTRR_VARIABLE_MASK) == sizeof(UINT64), "MTRR_VARIABLE_MASK Size Mismatch");
-
-#pragma pack(pop)
-
-
-typedef struct _SHV_MTRR_RANGE
-{
-	UINT32 Enabled;
-	UINT32 Type;
-	UINT64 PhysicalAddressMin;
-	UINT64 PhysicalAddressMax;
-}SHV_MTRR_RANGE, * PSHV_MTRR_RANGE;
-
-#define MTRR_MSR_CAPABILITIES   0x0fe
-#define MTRR_MSR_DEFAULT        0x2ff
-#define MTRR_MSR_VARIABLE_BASE  0x200
-#define MTRR_MSR_VARIABLE_MASK  (MTRR_MSR_VARIABLE_BASE+1)
-#define MTRR_PAGE_SIZE          4096
-#define MTRR_PAGE_MASK          (~(MTRR_PAGE_SIZE-1))
-//---------------------------------------
-
-#define _1GB (1 * 1024 * 1024 * 1024)
-#define _2MB (2 * 1024 * 1024)
-#define MTRR_TYPE_UC  0
-#define MTRR_TYPE_WC  1
-#define MTRR_TYPE_WT  4
-#define MTRR_TYPE_WP  5
-#define MTRR_TYPE_WB  6
-#define MTRR_TYPE_MAX 7
-
-// --------------------------------------
+/* CR8 */
+// {
+#define CR8_TPL_MASK  0x0000000F  /**< Task Priority Level (64-bit mode) */
+// }
 
 enum VMCSFIELD {
 	VIRTUAL_PROCESSOR_ID = 0x00000000,
@@ -551,7 +203,197 @@ enum VMCSFIELD {
 	HOST_RIP = 0x00006c16,
 };
 
-// -------------------------------------------------
+/** @name VMX Basic Exit Reasons.
+* @{
+*/
+/** -1 Invalid exit code */
+#define VMX_EXIT_INVALID                                        -1
+/** 0 Exception or non-maskable interrupt (NMI). */
+#define VMX_EXIT_XCPT_OR_NMI                                    0
+/** 1 External interrupt. */
+#define VMX_EXIT_EXT_INT                                        1
+/** 2 Triple fault. */
+#define VMX_EXIT_TRIPLE_FAULT                                   2
+/** 3 INIT signal. */
+#define VMX_EXIT_INIT_SIGNAL                                    3
+/** 4 Start-up IPI (SIPI). */
+#define VMX_EXIT_SIPI                                           4
+/** 5 I/O system-management interrupt (SMI). */
+#define VMX_EXIT_IO_SMI                                         5
+/** 6 Other SMI. */
+#define VMX_EXIT_SMI                                            6
+/** 7 Interrupt window exiting. */
+#define VMX_EXIT_INT_WINDOW                                     7
+/** 8 NMI window exiting. */
+#define VMX_EXIT_NMI_WINDOW                                     8
+/** 9 Task switch. */
+#define VMX_EXIT_TASK_SWITCH                                    9
+/** 10 Guest software attempted to execute CPUID. */
+#define VMX_EXIT_CPUID                                          10
+/** 11 Guest software attempted to execute GETSEC. */
+#define VMX_EXIT_GETSEC                                         11
+/** 12 Guest software attempted to execute HLT. */
+#define VMX_EXIT_HLT                                            12
+/** 13 Guest software attempted to execute INVD. */
+#define VMX_EXIT_INVD                                           13
+/** 14 Guest software attempted to execute INVLPG. */
+#define VMX_EXIT_INVLPG                                         14
+/** 15 Guest software attempted to execute RDPMC. */
+#define VMX_EXIT_RDPMC                                          15
+/** 16 Guest software attempted to execute RDTSC. */
+#define VMX_EXIT_RDTSC                                          16
+/** 17 Guest software attempted to execute RSM in SMM. */
+#define VMX_EXIT_RSM                                            17
+/** 18 Guest software executed VMCALL. */
+#define VMX_EXIT_VMCALL                                         18
+/** 19 Guest software executed VMCLEAR. */
+#define VMX_EXIT_VMCLEAR                                        19
+/** 20 Guest software executed VMLAUNCH. */
+#define VMX_EXIT_VMLAUNCH                                       20
+/** 21 Guest software executed VMPTRLD. */
+#define VMX_EXIT_VMPTRLD                                        21
+/** 22 Guest software executed VMPTRST. */
+#define VMX_EXIT_VMPTRST                                        22
+/** 23 Guest software executed VMREAD. */
+#define VMX_EXIT_VMREAD                                         23
+/** 24 Guest software executed VMRESUME. */
+#define VMX_EXIT_VMRESUME                                       24
+/** 25 Guest software executed VMWRITE. */
+#define VMX_EXIT_VMWRITE                                        25
+/** 26 Guest software executed VMXOFF. */
+#define VMX_EXIT_VMXOFF                                         26
+/** 27 Guest software executed VMXON. */
+#define VMX_EXIT_VMXON                                          27
+/** 28 Control-register accesses. */
+#define VMX_EXIT_MOV_CRX                                        28
+/** 29 Debug-register accesses. */
+#define VMX_EXIT_MOV_DRX                                        29
+/** 30 I/O instruction. */
+#define VMX_EXIT_IO_INSTR                                       30
+/** 31 RDMSR. Guest software attempted to execute RDMSR. */
+#define VMX_EXIT_RDMSR                                          31
+/** 32 WRMSR. Guest software attempted to execute WRMSR. */
+#define VMX_EXIT_WRMSR                                          32
+/** 33 VM-entry failure due to invalid guest state. */
+#define VMX_EXIT_ERR_INVALID_GUEST_STATE                        33
+/** 34 VM-entry failure due to MSR loading. */
+#define VMX_EXIT_ERR_MSR_LOAD                                   34
+/** 36 Guest software executed MWAIT. */
+#define VMX_EXIT_MWAIT                                          36
+/** 37 VM-exit due to monitor trap flag. */
+#define VMX_EXIT_MTF                                            37
+/** 39 Guest software attempted to execute MONITOR. */
+#define VMX_EXIT_MONITOR                                        39
+/** 40 Guest software attempted to execute PAUSE. */
+#define VMX_EXIT_PAUSE                                          40
+/** 41 VM-entry failure due to machine-check. */
+#define VMX_EXIT_ERR_MACHINE_CHECK                              41
+/** 43 TPR below threshold. Guest software executed MOV to CR8. */
+#define VMX_EXIT_TPR_BELOW_THRESHOLD                            43
+/** 44 APIC access. Guest software attempted to access memory at a physical address on the APIC-access page. */
+#define VMX_EXIT_APIC_ACCESS                                    44
+/** 45 Virtualized EOI. EOI virtualization was performed for a virtual interrupt
+whose vector indexed a bit set in the EOI-exit bitmap. */
+#define VMX_EXIT_VIRTUALIZED_EOI                                45
+/** 46 Access to GDTR or IDTR. Guest software attempted to execute LGDT, LIDT, SGDT, or SIDT. */
+#define VMX_EXIT_XDTR_ACCESS                                    46
+/** 47 Access to LDTR or TR. Guest software attempted to execute LLDT, LTR, SLDT, or STR. */
+#define VMX_EXIT_TR_ACCESS                                      47
+/** 48 EPT violation. An attempt to access memory with a guest-physical address was disallowed by the configuration of the EPT paging structures. */
+#define VMX_EXIT_EPT_VIOLATION                                  48
+/** 49 EPT misconfiguration. An attempt to access memory with a guest-physical address encountered a misconfigured EPT paging-structure entry. */
+#define VMX_EXIT_EPT_MISCONFIG                                  49
+/** 50 INVEPT. Guest software attempted to execute INVEPT. */
+#define VMX_EXIT_INVEPT                                         50
+/** 51 RDTSCP. Guest software attempted to execute RDTSCP. */
+#define VMX_EXIT_RDTSCP                                         51
+/** 52 VMX-preemption timer expired. The preemption timer counted down to zero. */
+#define VMX_EXIT_PREEMPT_TIMER                                  52
+/** 53 INVVPID. Guest software attempted to execute INVVPID. */
+#define VMX_EXIT_INVVPID                                        53
+/** 54 WBINVD. Guest software attempted to execute WBINVD. */
+#define VMX_EXIT_WBINVD                                         54
+/** 55 XSETBV. Guest software attempted to execute XSETBV. */
+#define VMX_EXIT_XSETBV                                         55
+/** 56 APIC write. Guest completed write to virtual-APIC. */
+#define VMX_EXIT_APIC_WRITE                                     56
+/** 57 RDRAND. Guest software attempted to execute RDRAND. */
+#define VMX_EXIT_RDRAND                                         57
+/** 58 INVPCID. Guest software attempted to execute INVPCID. */
+#define VMX_EXIT_INVPCID                                        58
+/** 59 VMFUNC. Guest software attempted to execute VMFUNC. */
+#define VMX_EXIT_VMFUNC                                         59
+/** 60 ENCLS. Guest software attempted to execute ENCLS. */
+#define VMX_EXIT_ENCLS                                          60
+/** 61 - RDSEED - Guest software attempted to executed RDSEED and exiting was
+* enabled. */
+#define VMX_EXIT_RDSEED                                         61
+/** 62 - Page-modification log full. */
+#define VMX_EXIT_PML_FULL                                       62
+/** 63 - XSAVES - Guest software attempted to executed XSAVES and exiting was
+* enabled (XSAVES/XRSTORS was enabled too, of course). */
+#define VMX_EXIT_XSAVES                                         63
+/** 63 - XRSTORS - Guest software attempted to executed XRSTORS and exiting
+* was enabled (XSAVES/XRSTORS was enabled too, of course). */
+#define VMX_EXIT_XRSTORS                                        64
+/** The maximum exit value (inclusive). */
+#define VMX_EXIT_MAX                                            (VMX_EXIT_XRSTORS)
+/** @} */
+
+/* MSRs */
+#define IA32_FEATURE_CONTROL_CODE		0x03A
+#define IA32_SYSENTER_CS                        0x174
+#define IA32_SYSENTER_ESP                       0x175
+#define IA32_SYSENTER_EIP                       0x176
+#define IA32_DEBUGCTL                           0x1D9
+#define IA32_VMX_BASIC_MSR_CODE			0x480
+#define IA32_VMX_PINBASED_CTLS                  0x481
+#define IA32_VMX_PROCBASED_CTLS                 0x482
+#define IA32_VMX_EXIT_CTLS                      0x483
+#define IA32_VMX_ENTRY_CTLS                     0x484
+#define IA32_VMX_MISC                           0x485
+#define IA32_VMX_CR0_FIXED0                     0x486
+#define IA32_VMX_CR0_FIXED1                     0x487
+#define IA32_VMX_CR4_FIXED0                     0x488
+#define IA32_VMX_CR4_FIXED1                     0x489
+#define	IA32_FS_BASE    		   0xc0000100
+#define	IA32_GS_BASE	                   0xc0000101
+#define IA32_VMX_PROCBASED_CTLS2				0x0000048b
+
+#define MSR_IA32_VMX_BASIC                      0x480
+#define MSR_IA32_VMX_PINBASED_CTLS              0x481
+#define MSR_IA32_VMX_PROCBASED_CTLS             0x482
+#define MSR_IA32_VMX_EXIT_CTLS                  0x483
+#define MSR_IA32_VMX_ENTRY_CTLS                 0x484
+#define MSR_IA32_VMX_MISC                       0x485
+#define MSR_IA32_VMX_CR0_FIXED0                 0x486
+#define MSR_IA32_VMX_CR0_FIXED1                 0x487
+#define MSR_IA32_VMX_CR4_FIXED0                 0x488
+#define MSR_IA32_VMX_CR4_FIXED1                 0x489
+#define MSR_IA32_VMX_VMCS_ENUM                  0x48a
+#define MSR_IA32_VMX_PROCBASED_CTLS2            0x48b
+#define MSR_IA32_VMX_EPT_VPID_CAP               0x48c
+#define MSR_IA32_VMX_TRUE_PINBASED_CTLS         0x48d
+#define MSR_IA32_VMX_TRUE_PROCBASED_CTLS        0x48e
+#define MSR_IA32_VMX_TRUE_EXIT_CTLS             0x48f
+#define MSR_IA32_VMX_TRUE_ENTRY_CTLS            0x490
+
+#define MSR_IA32_MTRRCAP			0xfe
+#define MSR_IA32_MTRR_DEF_TYPE			0x2ff
+#define MSR_IA32_MTRR_PHYSBASE(n)		(0x200 + 2*(n))
+#define MSR_IA32_MTRR_PHYSMASK(n)		(0x200 + 2*(n) + 1)
+#define MSR_IA32_MTRR_FIX64K_00000		0x250
+#define MSR_IA32_MTRR_FIX16K_80000		0x258
+#define MSR_IA32_MTRR_FIX16K_A0000		0x259
+#define MSR_IA32_MTRR_FIX4K_C0000		0x268
+#define MSR_IA32_MTRR_FIX4K_C8000		0x269
+#define MSR_IA32_MTRR_FIX4K_D0000		0x26a
+#define MSR_IA32_MTRR_FIX4K_D8000		0x26b
+#define MSR_IA32_MTRR_FIX4K_E0000		0x26c
+#define MSR_IA32_MTRR_FIX4K_E8000		0x26d
+#define MSR_IA32_MTRR_FIX4K_F0000		0x26e
+#define MSR_IA32_MTRR_FIX4K_F8000		0x26f
+#define MSR_GS_BASE 0xC0000101
 
 #define CPU_BASED_VIRTUAL_INTR_PENDING          0x00000004
 #define CPU_BASED_USE_TSC_OFFSETING             0x00000008
@@ -619,8 +461,427 @@ enum VMCSFIELD {
 #define SECONDARY_EXEC_XSAVES                   0x00100000
 #define SECONDARY_EXEC_PCOMMIT                  0x00200000
 #define SECONDARY_EXEC_TSC_SCALING              0x02000000
+//---------------------------------------
+#pragma pack(push,1)
 
-// -------------------------------------------------
+#define FEATURE_CONTROL_LOCKED	(1 << 0)
+#define FEATURE_CONTROL_VMXON_ENABLED_INSIDE_SMX	(1 << 1)
+#define FEATURE_CONTROL_VMXON_ENABLED_OUTSIDE_SMX	(1 << 2)
+
+//EPTP
+typedef struct _VMX_EPTP
+{
+	union
+	{
+		struct
+		{
+			UINT64 Type : 3;
+			UINT64 PageWalkLength : 3;
+			UINT64 EnableAccessAndDirtyFlags : 1;
+			UINT64 Reserved : 5;
+			UINT64 PageFrameNumber : 36;
+			UINT64 ReservedHigh : 16;
+		}u;
+
+		UINT64 AsUlonglong;
+	};
+
+
+}VMX_EPTP, * PVMX_EPTP;
+static_assert(sizeof(VMX_EPTP) == sizeof(UINT64), "EPTP Size Mismatch");
+
+//PML4E
+typedef struct _VMX_PML4E
+{
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;
+			UINT64 Write : 1;
+			UINT64 Execute : 1;
+			UINT64 Reserved : 5;
+			UINT64 Accessed : 1;
+			UINT64 SofewareUse : 1;
+			UINT64 UserModeExecute : 1;
+			UINT64 SofewareUse2 : 1;
+			UINT64 PDPTAddress : 36;
+			UINT64 ReservedHigh : 4;
+			UINT64 SofewareUseHigh : 12;
+		}u;
+
+		UINT64 AsUlonglong;
+	};
+
+}VMX_PML4E, * PVMX_PML4E;
+static_assert(sizeof(VMX_PML4E) == sizeof(UINT64), "PML4E Size Mismatch");
+
+//PDPTE
+typedef struct _VMX_HUGE_PDPTE
+{
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;  //0
+			UINT64 Write : 1; //1
+			UINT64 Execute : 1;  //2
+			UINT64 Type : 3;     //5:3
+			UINT64 IgnorePat : 1;//6
+			UINT64 Large : 1;    //7
+			UINT64 Accessed : 1; //8
+			UINT64 Dirty : 1;    //9
+			UINT64 UserModeExecute : 1;//10
+			UINT64 SofewareUse : 1;    //11
+			UINT64 Reserved : 18;   //29:12
+			UINT64 PDTAddress : 18; //(N-1):30
+			UINT64 ReservedHigh : 4;
+			UINT64 SoftworeUseHigh : 11;
+			UINT64 SuppressVme : 1;
+		}u;
+
+		UINT64 AsUlonglong;
+	};
+
+}VMX_HUGE_PDPTE, * PVMX_HUGE_PDPTE;
+static_assert(sizeof(VMX_HUGE_PDPTE) == sizeof(UINT64), "HUGE_PDPTE Size Mismatch");
+
+//PDPTE
+typedef struct _VMX_PDPTE
+{
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;  //0
+			UINT64 Write : 1; //1
+			UINT64 Execute : 1;  //2
+			UINT64 Reserved : 5; //7:3
+			UINT64 Accessed : 1; //8
+			UINT64 SoftwareUse : 1; //9
+			UINT64 UserModeExecute : 1;//10
+			UINT64 SofewareUse2 : 1;    //11
+			UINT64 PDTAddress : 36;
+			UINT64 ReservedHigh : 4;
+			UINT64 SoftworeUseHigh : 12; //63:52
+		}u;
+
+		UINT64 AsUlonglong;
+	};
+
+}VMX_PDPTE, * PVMX_PDPTE;
+static_assert(sizeof(VMX_PDPTE) == sizeof(UINT64), "PDPTE Size Mismatch");
+
+//PDE
+typedef struct _VMX_LARGE_PDE
+{
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;  //0
+			UINT64 Write : 1; //1
+			UINT64 Execute : 1;  //2
+			UINT64 Type : 3;     //5:3
+			UINT64 IgnorePat : 1;//6
+			UINT64 Large : 1;    //7
+			UINT64 Accessed : 1; //8
+			UINT64 Dirty : 1;    //9
+			UINT64 UserModeExecute : 1;//10
+			UINT64 SofewareUse : 1;    //11
+			UINT64 Reserved : 9;   //20:12
+			UINT64 PTAddress : 27; //(N-1):21
+			UINT64 ReservedHigh : 4;
+			UINT64 SoftworeUseHigh : 11; //62:52
+			UINT64 SuppressVme : 1;
+		}u;
+
+		UINT64 AsUlonglong;
+	};
+
+}VMX_LARGE_PDE, * PVMX_LARGE_PDE;
+static_assert(sizeof(VMX_LARGE_PDE) == sizeof(UINT64), "LARGE_PDE Size Mismatch");
+
+//PDE
+typedef struct _VMX_PDE
+{
+	union
+	{
+		struct
+		{
+			UINT64 Read : 1;  //0
+			UINT64 Write : 1; //1
+			UINT64 Execute : 1;  //2
+			UINT64 Reserved : 4;     //6:3
+			UINT64 Small : 1;    //7
+			UINT64 Accessed : 1; //8
+			UINT64 SofewareUse : 1;    //9
+			UINT64 UserModeExecute : 1;//10
+			UINT64 SofewareUse2 : 1;   //11
+			UINT64 PTAddress : 36; //(N-1):12
+			UINT64 ReservedHigh : 4;
+			UINT64 SoftworeUseHigh : 12; //63:52
+		}u;
+
+		UINT64 AsUlonglong;
+	};
+
+}VMX_PDE, * PVMX_PDE;
+static_assert(sizeof(VMX_PDE) == sizeof(UINT64), "PDE Size Mismatch");
+
+
+#define PML4E_ENTRY_COUNT 512
+#define PDPTE_ENTRY_COUNT 512
+#define PDE_ENTRY_COUNT   512
+
+typedef struct _VMX_EPT
+{
+	DECLSPEC_ALIGN(PAGE_SIZE) VMX_PML4E PML4T[PML4E_ENTRY_COUNT];
+	DECLSPEC_ALIGN(PAGE_SIZE) VMX_PDPTE PDPT[PDPTE_ENTRY_COUNT];
+	DECLSPEC_ALIGN(PAGE_SIZE) VMX_LARGE_PDE PDT[PDPTE_ENTRY_COUNT][PDE_ENTRY_COUNT];
+}VMX_EPT, * PVMX_EPT;
+
+
+#define SELECTOR_TABLE_INDEX    0x04
+
+typedef union _KGDTENTRY64
+{
+	struct
+	{
+		UINT16 LimitLow;
+		UINT16 BaseLow;
+		union
+		{
+			struct
+			{
+				UINT8 BaseMiddle;
+				UINT8 Flags1;
+				UINT8 Flags2;
+				UINT8 BaseHigh;
+			} Bytes;
+			struct
+			{
+				UINT32 BaseMiddle : 8;
+				UINT32 Type : 5;
+				UINT32 Dpl : 2;
+				UINT32 Present : 1;
+				UINT32 LimitHigh : 4;
+				UINT32 System : 1;
+				UINT32 LongMode : 1;
+				UINT32 DefaultBig : 1;
+				UINT32 Granularity : 1;
+				UINT32 BaseHigh : 8;
+			} Bits;
+		};
+		UINT32 BaseUpper;
+		UINT32 MustBeZero;
+	};
+	struct
+	{
+		INT64 DataLow;
+		INT64 DataHigh;
+	};
+} KGDTENTRY64, * PKGDTENTRY64;
+
+/* GDT */
+typedef struct _GDT {
+	USHORT wLimit;
+	ULONG_PTR ulBase;
+} GDT, * PGDT;
+
+/* IDT */
+typedef struct _IDT {
+	USHORT wLimit;
+	ULONG_PTR ulBase;
+} IDT, * PIDT;
+
+/* GDT Entry */
+typedef struct _GDTENTRY {
+
+	union {
+		struct {
+			ULONG64 LimitLo : 16;
+			ULONG64 BaseLo : 16;
+			ULONG64 BaseMid : 8;
+			ULONG64 Type : 4;
+			ULONG64 S : 1;
+			ULONG64 DPL : 2;
+			ULONG64 P : 1;
+			ULONG64 LimitHi : 4;
+			ULONG64 A : 1;
+			ULONG64 Reserved_0 : 1;
+			ULONG64 DB : 1;
+			ULONG64 G : 1;
+			ULONG64 BaseHi : 8;
+		} AsFields;
+		struct {
+			UCHAR Low1;
+			UCHAR Low2;
+			UCHAR Low3;
+			UCHAR Low4;
+			UCHAR Hi1;
+			UCHAR Hi2;
+			UCHAR Hi3;
+			UCHAR Hi4;
+		} AsBytes;
+	} u;
+	ULONG32 BaseUpper;
+	ULONG32 Reserved_1;
+} GDTENTRY, * PGDTENTRY;
+C_ASSERT(sizeof(GDTENTRY) == 2 * sizeof(ULONG_PTR));
+#pragma pack(pop)
+
+typedef struct _GUEST_STATE {
+	ULONG_PTR cs;
+	ULONG_PTR ds;
+	ULONG_PTR ss;
+	ULONG_PTR es;
+	ULONG_PTR fs;
+	ULONG_PTR gs;
+	GDT gdt;
+	IDT idt;
+	ULONG_PTR ldtr;
+	ULONG_PTR tr;
+	ULONG_PTR rsp;
+	ULONG_PTR rip;
+	ULONG_PTR rflags;
+	ULONG_PTR cr0;
+	ULONG_PTR cr4;
+	ULONG_PTR cr3;
+	ULONG_PTR dr7;
+	ULONG_PTR msr_debugctl;
+	ULONG_PTR msr_sysenter_cs;
+	ULONG_PTR msr_sysenter_eip;
+	ULONG_PTR msr_sysenter_esp;
+
+	ULONG_PTR msr_perf_global_ctrl;
+	ULONG_PTR msr_pat;
+	ULONG_PTR msr_efer;
+	ULONG_PTR msr_bndcfgs;
+} GUEST_STATE, * PGUEST_STATE;
+
+typedef struct _HOST_STATE {
+	ULONG_PTR cr0;
+	ULONG_PTR cr3;
+	ULONG_PTR cr4;
+	ULONG_PTR rsp;
+	ULONG_PTR rip;
+	ULONG_PTR cs;
+	ULONG_PTR ds;
+	ULONG_PTR ss;
+	ULONG_PTR es;
+	ULONG_PTR fs;
+	ULONG_PTR gs;
+	ULONG_PTR tr;
+	ULONG_PTR fsbase;
+	ULONG_PTR gsbase;
+	ULONG_PTR trbase;
+	GDT gdt;
+	IDT idt;
+	ULONG_PTR msr_sysenter_cs;
+	ULONG_PTR msr_sysenter_esp;
+	ULONG_PTR msr_sysenter_eip;
+} HOST_STATE, * PHOST_STATE;
+
+typedef struct _MTRR_CAPABILITIES
+{
+	union
+	{
+		struct
+		{
+			UINT64 VarCnt : 8;
+			UINT64 FixedSupported : 1;
+			UINT64 Reserved : 1;
+			UINT64 WcSupported : 1;
+			UINT64 SmrrSupported : 1;
+			UINT64 Reserved_2 : 52;
+		} u;
+		UINT64 AsUlonglong;
+	};
+} MTRR_CAPABILITIES, * PMTRR_CAPABILITIES;
+C_ASSERT(sizeof(MTRR_CAPABILITIES) == sizeof(UINT64));
+
+typedef struct _MTRR_VARIABLE_BASE
+{
+	union
+	{
+		struct
+		{
+			UINT64 Type : 8;
+			UINT64 Reserved : 4;
+			UINT64 PhysBase : 36;
+			UINT64 Reserved2 : 16;
+		} u;
+		UINT64 AsUlonglong;
+	};
+} MTRR_VARIABLE_BASE, * PMTRR_VARIABLE_BASE;
+C_ASSERT(sizeof(MTRR_VARIABLE_BASE) == sizeof(UINT64));
+
+
+typedef struct _MTRR_VARIABLE_MASK
+{
+	union
+	{
+		struct
+		{
+			UINT64 Reserved : 11;
+			UINT64 Enabled : 1;
+			UINT64 PhysMask : 36;
+			UINT64 Reserved2 : 16;
+		} u;
+		UINT64 AsUlonglong;
+	};
+} MTRR_VARIABLE_MASK, * PMTRR_VARIABLE_MASK;
+C_ASSERT(sizeof(MTRR_VARIABLE_MASK) == sizeof(UINT64));
+
+#define _1GB                        (1 * 1024 * 1024 * 1024)
+#define _2MB                        (2 * 1024 * 1024)
+#define MTRR_TYPE_UC            0
+#define MTRR_TYPE_USWC          1
+#define MTRR_TYPE_WT            4
+#define MTRR_TYPE_WP            5
+#define MTRR_TYPE_WB            6
+#define MTRR_TYPE_MAX           7
+
+typedef struct _SHV_MTRR_RANGE
+{
+	UINT32 Enabled;
+	UINT32 Type;
+	UINT64 PhysicalAddressMin;
+	UINT64 PhysicalAddressMax;
+} SHV_MTRR_RANGE, * PSHV_MTRR_RANGE;
+
+#define MTRR_MSR_CAPABILITIES   0x0fe
+#define MTRR_MSR_DEFAULT        0x2ff
+#define MTRR_MSR_VARIABLE_BASE  0x200
+#define MTRR_MSR_VARIABLE_MASK  (MTRR_MSR_VARIABLE_BASE+1)
+#define MTRR_PAGE_SIZE          4096
+#define MTRR_PAGE_MASK          (~(MTRR_PAGE_SIZE-1))
+
+#define ROUNDUP(x,align) ((x + align - 1) & ~(align - 1))
+#define LODWORD(qword) (((ULONGLONG)(qword)) & 0xFFFFFFFF)
+#define HIDWORD(qword) ((((ULONGLONG)(qword)) >> 32) & 0xFFFFFFFF)
+#ifndef MAKEQWORD
+#define MAKEQWORD(lo, hi) ((((ULONGLONG)lo) & 0xFFFFFFFF) | ((((ULONGLONG)hi) & 0xFFFFFFFF) << 32))
+#endif
+
+#define R_RAX 0
+#define R_RCX 1
+#define R_RDX 2
+#define R_RBX 3
+#define R_RSP 4
+#define R_RBP 5
+#define R_RSI 6
+#define R_RDI 7
+#define R_R8 8
+#define R_R9 9
+#define R_R10 10
+#define R_R11 11
+#define R_R12 12
+#define R_R13 13
+#define R_R14 14
+#define R_R15 15
+#define R_MAX 16
 
 class SimpleHypervisor
 {
@@ -634,6 +895,7 @@ public:
 		, m_VMXRegionPhysAddr(0)
 		, m_VMCSRegionPhysAddr(0)
 		, m_MsrBitmapRegionPhysAddr(0)
+		, m_VMXRootStackRegion(0)
 		, m_EPT(NULL)
 	{
 
@@ -641,17 +903,16 @@ public:
 
 public:
 	BOOLEAN Initialize();
+	VOID UnInitialize();
 	BOOLEAN Install();
 	BOOLEAN UnInstall();
-	VOID UnInitialize();
-
 protected:
-	BOOLEAN CheckVTSupported();
-	BOOLEAN CheckVTEnable();
+	BOOLEAN CheakVTSupported();  
+	BOOLEAN CheakVTEnable();    
 	VOID SetVMExitHandler(ULONG_PTR HandlerEntryPoint, ULONG_PTR HandlerStack);
+	VOID GdtEntryToVmcsFormat(ULONG selector, ULONG_PTR* base, ULONG_PTR* limit, ULONG_PTR* rights);
 	BOOLEAN InitVMCS();
 	VOID InitializeEPT();
-
 private:
 	ULONG m_CPU;
 	ULONG_PTR* m_VMXRegion;
@@ -663,7 +924,6 @@ private:
 
 	HOST_STATE m_HostState;
 	GUEST_STATE m_GuestState;
-
 	ULONG_PTR m_VMXRegionPhysAddr;
 	ULONG_PTR m_VMCSRegionPhysAddr;
 	ULONG_PTR m_MsrBitmapRegionPhysAddr;
@@ -675,5 +935,5 @@ private:
 	ULONG_PTR m_VmxFeatureControl;
 
 	VMX_EPT* m_EPT;
-	VMX_EPTP* m_EPTP;
+	VMX_EPTP m_EPTP;
 };
