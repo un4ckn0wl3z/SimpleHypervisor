@@ -468,7 +468,8 @@ whose vector indexed a bit set in the EOI-exit bitmap. */
 #define FEATURE_CONTROL_VMXON_ENABLED_INSIDE_SMX	(1 << 1)
 #define FEATURE_CONTROL_VMXON_ENABLED_OUTSIDE_SMX	(1 << 2)
 
-//EPTP
+//EPTP Structure
+
 typedef struct _VMX_EPTP
 {
 	union
@@ -490,7 +491,8 @@ typedef struct _VMX_EPTP
 }VMX_EPTP, * PVMX_EPTP;
 static_assert(sizeof(VMX_EPTP) == sizeof(UINT64), "EPTP Size Mismatch");
 
-//PML4E
+//PML4E Structure
+
 typedef struct _VMX_PML4E
 {
 	union
@@ -516,7 +518,8 @@ typedef struct _VMX_PML4E
 }VMX_PML4E, * PVMX_PML4E;
 static_assert(sizeof(VMX_PML4E) == sizeof(UINT64), "PML4E Size Mismatch");
 
-//PDPTE
+//PDPTE structure (large page)
+
 typedef struct _VMX_HUGE_PDPTE
 {
 	union
@@ -546,7 +549,8 @@ typedef struct _VMX_HUGE_PDPTE
 }VMX_HUGE_PDPTE, * PVMX_HUGE_PDPTE;
 static_assert(sizeof(VMX_HUGE_PDPTE) == sizeof(UINT64), "HUGE_PDPTE Size Mismatch");
 
-//PDPTE
+//PDPTE structure
+
 typedef struct _VMX_PDPTE
 {
 	union
@@ -572,7 +576,8 @@ typedef struct _VMX_PDPTE
 }VMX_PDPTE, * PVMX_PDPTE;
 static_assert(sizeof(VMX_PDPTE) == sizeof(UINT64), "PDPTE Size Mismatch");
 
-//PDE
+//PDE structure (2M addressing)
+
 typedef struct _VMX_LARGE_PDE
 {
 	union
@@ -602,7 +607,8 @@ typedef struct _VMX_LARGE_PDE
 }VMX_LARGE_PDE, * PVMX_LARGE_PDE;
 static_assert(sizeof(VMX_LARGE_PDE) == sizeof(UINT64), "LARGE_PDE Size Mismatch");
 
-//PDE
+//PDE Structure
+
 typedef struct _VMX_PDE
 {
 	union
@@ -891,28 +897,26 @@ public:
 		, m_VMXRegion(NULL)
 		, m_VMCSRegion(NULL)
 		, m_MsrBitmapRegion(NULL)
-		, m_VMXOn(FALSE)
 		, m_VMXRegionPhysAddr(0)
 		, m_VMCSRegionPhysAddr(0)
 		, m_MsrBitmapRegionPhysAddr(0)
 		, m_VMXRootStackRegion(0)
 		, m_EPT(NULL)
 	{
-
+		m_VMXOn = FALSE;
 	}
 
 public:
-	BOOLEAN Initialize();
-	VOID UnInitialize();
-	BOOLEAN Install();
-	BOOLEAN UnInstall();
+	BOOLEAN InstallVT();
+	VOID UnInstallVT();
 protected:
-	BOOLEAN CheakVTSupported();  
-	BOOLEAN CheakVTEnable();    
+	BOOLEAN CheakVTSupported();  // Whether to support virtualization
+	BOOLEAN CheakVTEnable();     // Is the virtualization switch turned on?
 	VOID SetVMExitHandler(ULONG_PTR HandlerEntryPoint, ULONG_PTR HandlerStack);
-	VOID GdtEntryToVmcsFormat(ULONG selector, ULONG_PTR* base, ULONG_PTR* limit, ULONG_PTR* rights);
-	VOID InitVMCS();
 	VOID InitializeEPT();
+	VOID GdtEntryToVmcsFormat(ULONG selector, ULONG_PTR* base, ULONG_PTR* limit, ULONG_PTR* rights);
+	VOID SetupVMCS();
+
 private:
 	ULONG m_CPU;
 	ULONG_PTR* m_VMXRegion;
@@ -920,7 +924,7 @@ private:
 	UINT8* m_MsrBitmapRegion;
 
 	ULONG_PTR m_VMXRootStackRegion;
-	BOOLEAN m_VMXOn;
+	volatile BOOLEAN m_VMXOn;
 
 	HOST_STATE m_HostState;
 	GUEST_STATE m_GuestState;

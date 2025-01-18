@@ -1,6 +1,8 @@
 #include <ntifs.h>
+#include <intrin.h>
 
 #include "SimpleHypervisor.h"
+#include "Asm.h"
 
 SimpleHypervisor* VT_CPU[128];
 
@@ -60,14 +62,16 @@ VOID VTLoadProc(
 )
 {
 	UNREFERENCED_PARAMETER(Dpc);
+	UNREFERENCED_PARAMETER(DeferredContext);
 	ULONG uCPU = KeGetCurrentProcessorNumber();
-	DbgPrintEx(77,0,"Debug:CPU------>%d\n", uCPU);
+	DbgPrintEx(77,0,"Debug: Current CPU----->%d\n", uCPU);
 
-	VT_CPU[uCPU] = new SimpleHypervisor(uCPU); 
+	VT_CPU[uCPU] = new SimpleHypervisor(uCPU);   // Beware memory leak
 
-	if (VT_CPU[uCPU]->Initialize())
+
+	if (VT_CPU[uCPU]->InstallVT())
 	{
-		VT_CPU[uCPU]->Install();
+		DbgPrintEx(77,0,"VT startup completed\n");
 	}
 
 	KeSignalCallDpcSynchronize(SystemArgument2);
@@ -82,13 +86,11 @@ VOID VTUnLoadProc(
 )
 {
 	UNREFERENCED_PARAMETER(Dpc);
+	UNREFERENCED_PARAMETER(DeferredContext);
 	ULONG uCPU = KeGetCurrentProcessorNumber();
-	DbgPrintEx(77,0,"Debug:CPU------>%d\n", uCPU);
+	DbgPrintEx(77,0,"Debug: Current CPU----->%d\n", uCPU);
 
-
-	VT_CPU[uCPU]->UnInstall();
-
-	VT_CPU[uCPU]->UnInitialize();
+	VT_CPU[uCPU]->UnInstallVT();
 
 	if (VT_CPU[uCPU])
 	{
@@ -98,7 +100,6 @@ VOID VTUnLoadProc(
 	KeSignalCallDpcSynchronize(SystemArgument2);
 	KeSignalCallDpcDone(SystemArgument1);
 }
-
 
 VOID VTLoad()
 {
@@ -110,9 +111,10 @@ extern "C"
 #endif
 VOID VTUnLoad(PDRIVER_OBJECT DriverObject)
 {
+	UNREFERENCED_PARAMETER(DriverObject);
 	KeGenericCallDpc(VTUnLoadProc, NULL);
 
-	DbgPrintEx(77,0,"Debug:unloaded!\n");
+	DbgPrintEx(77,0,"Debug: Driver uninstall!\n");
 }
 
 #ifdef __cplusplus
@@ -121,7 +123,7 @@ extern "C"
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegisterPath)
 {
 	UNREFERENCED_PARAMETER(RegisterPath);
-	DbgPrintEx(77,0,"Debug:loaded!\n");
+	DbgPrintEx(77,0,"Debug: Driver installation!\n");
 
 	DriverObject->DriverUnload = VTUnLoad;
 

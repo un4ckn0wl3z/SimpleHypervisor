@@ -113,7 +113,7 @@ __writefs ENDP
 
 Asm_StackPointer PROC
  mov rax, rsp
- sub rax, sizeof(QWORD)		; 
+ sub rax, sizeof(QWORD)
  ret
 Asm_StackPointer ENDP
 
@@ -122,10 +122,9 @@ Asm_NextInstructionPointer PROC
  ret
 Asm_NextInstructionPointer ENDP
 
-
 Asm_VMExitHandler PROC
 	cli
-	SAVESTATE   ;Save state
+	SAVESTATE   ;Save the scene
 	mov   rcx,rsp   ;Put the top of the stack to rcx
 
 	sub   rsp,0100h
@@ -133,14 +132,65 @@ Asm_VMExitHandler PROC
 	add   rsp,0100h
 
 
-	LOADSTATE   ;Restoration register
+	LOADSTATE   ;Restoration site
 	sti
+
 __do_resume:
 	vmresume;   Return to VM non-root (return to the Guest environment to continue execution)
-
-
-
+	ret
 Asm_VMExitHandler ENDP
+
+
+Asm_VmxCall PROC
+	push rax
+	push rcx
+	push rdx
+	push rbx
+	push rsp     ;HOST_RSP
+	push rbp
+	push rsi
+	push rdi
+	push r8
+	push r9
+	push r10
+	push r11
+	push r12
+	push r13
+	push r14
+	push r15 ;pushaq
+
+	pushfq
+
+	mov rax,rcx
+	vmcall
+	
+	popfq
+	
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop r11
+	pop r10
+	pop r9
+	pop r8
+	pop rdi
+	pop rsi
+	pop rbp
+	pop rsp
+	pop rbx
+	pop rdx
+	pop rcx
+	pop rax ;popaq
+	
+	ret
+Asm_VmxCall ENDP
+
+Asm_AfterVMXOff Proc
+	mov rsp,rcx
+	jmp rdx
+	ret
+Asm_AfterVMXOff Endp
 
 _ASM ENDS
 END
