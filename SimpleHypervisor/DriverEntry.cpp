@@ -54,7 +54,7 @@ KeGenericCallDpc(
 );
 //------------------------------------------
 
-VOID VTLoadProc(
+VOID HvLoadProc(
 	_In_ struct _KDPC* Dpc,
 	_In_opt_ PVOID DeferredContext,
 	_In_opt_ PVOID SystemArgument1,
@@ -78,7 +78,7 @@ VOID VTLoadProc(
 	KeSignalCallDpcDone(SystemArgument1);
 }
 
-VOID VTUnLoadProc(
+VOID HvUnLoadProc(
 	_In_ struct _KDPC* Dpc,
 	_In_opt_ PVOID DeferredContext,
 	_In_opt_ PVOID SystemArgument1,
@@ -101,18 +101,18 @@ VOID VTUnLoadProc(
 	KeSignalCallDpcDone(SystemArgument1);
 }
 
-VOID VTLoad()
+VOID HvLoad()
 {
-	KeGenericCallDpc(VTLoadProc, NULL);
+	KeGenericCallDpc(HvLoadProc, NULL);
 }
 
 #ifdef __cplusplus
 extern "C"
 #endif
-VOID VTUnLoad(PDRIVER_OBJECT DriverObject)
+VOID HvUnLoad(PDRIVER_OBJECT DriverObject)
 {
 	UNREFERENCED_PARAMETER(DriverObject);
-	KeGenericCallDpc(VTUnLoadProc, NULL);
+	KeGenericCallDpc(HvUnLoadProc, NULL);
 
 	DbgPrintEx(77,0,"Debug: Driver uninstall!\n");
 }
@@ -125,9 +125,9 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegisterPath)
 	UNREFERENCED_PARAMETER(RegisterPath);
 	DbgPrintEx(77,0,"Debug: Driver installation!\n");
 
-	DriverObject->DriverUnload = VTUnLoad;
+	DriverObject->DriverUnload = HvUnLoad;
 
-	VTLoad();
+	HvLoad();
 
 	return STATUS_SUCCESS;
 }

@@ -161,12 +161,12 @@ EXTERN_C VOID VMExitHandler(ULONG_PTR* Registers)
 	switch (ExitReason)
 	{
 	case VMX_EXIT_CPUID:
-		if (Registers[R_RAX] == 0x88888888)
+		if (Registers[R_RAX] == 0x13371337)
 		{
 			ShowGuestRegister(Registers);
-			Registers[R_RBX] = 0x66666666;
-			Registers[R_RCX] = 0x33333333;
-			Registers[R_RDX] = 0x22222222;
+			Registers[R_RBX] = 0xBAADF00D;
+			Registers[R_RCX] = 0xFEEDC0DE;
+			Registers[R_RDX] = 0xDEADBEEF;
 		}
 		else
 		{
