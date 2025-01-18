@@ -9,16 +9,16 @@
 #define VMERR_RET(x, s)\
 	if( (x) != 0 )\
 	{\
-		DbgPrint("Debug:%s Call [failed]!\n", s);\
+		DbgPrintEx(77,0,"Debug:%s Call [failed]!\r\n", s);\
 		return;\
 	}
 
 #define VMWRITE_ERR_RET(e,v)\
-	DbgPrintEx(77,0,"Debug:[%d]%s:0x%016llX\n",m_CPU, #e, v);\
+	DbgPrintEx(77,0,"Debug:%s------>0x%016llX\r\n", #e, v);\
 	VMERR_RET(vmxwrite(e,v),"vmwrite - " #e);
 
 #define VMREAD_ERR_RET(e,v)\
-	DbgPrint("Debug:%s------>0x%016llX\n", #e, v);\
+	DbgPrintEx(77,0,"Debug:%s------>0x%016llX\r\n", #e, v);\
     VMERR_RET(vmxread(e,v),"vmread - " #e);
 
 __forceinline unsigned char vmxon(ULONG_PTR* VmxRegion)
@@ -66,23 +66,23 @@ void ShowGuestRegister(ULONG_PTR* Registers)
 	ULONG_PTR GsBase = 0, DebugCtl = 0, Dr7 = 0, RFlags = 0;
 	ULONG_PTR IdtBase = 0, GdtBase = 0, IdtLimit = 0, GdtLimit = 0;
 
-	DbgPrint("Debug:RAX = 0x%016llX RCX = 0x%016llX RDX = 0x%016llX RBX = 0x%016llX\n",
+	DbgPrintEx(77, 0, "Debug:RAX = 0x%016llX RCX = 0x%016llX RDX = 0x%016llX RBX = 0x%016llX\r\n",
 		Registers[R_RAX], Registers[R_RCX], Registers[R_RDX], Registers[R_RBX]);
-	DbgPrint("Debug:RSP = 0x%016llX RBP = 0x%016llX RSI = 0x%016llX RDI = 0x%016llX\n",
+	DbgPrintEx(77, 0, "Debug:RSP = 0x%016llX RBP = 0x%016llX RSI = 0x%016llX RDI = 0x%016llX\r\n",
 		Registers[R_RSP], Registers[R_RBP], Registers[R_RSI], Registers[R_RDI]);
-	DbgPrint("Debug:R8 = 0x%016llX R9 = 0x%016llX R10 = 0x%016llX R11 = 0x%016llX\n",
+	DbgPrintEx(77, 0, "Debug:R8 = 0x%016llX R9 = 0x%016llX R10 = 0x%016llX R11 = 0x%016llX\r\n",
 		Registers[R_R8], Registers[R_R9], Registers[R_R10], Registers[R_R11]);
-	DbgPrint("Debug:R12 = 0x%016llX R13 = 0x%016llX R14 = 0x%016llX R15 = 0x%016llX\n",
+	DbgPrintEx(77, 0, "Debug:R12 = 0x%016llX R13 = 0x%016llX R14 = 0x%016llX R15 = 0x%016llX\r\n",
 		Registers[R_R12], Registers[R_R13], Registers[R_R14], Registers[R_R15]);
 
 	__vmx_vmread(GUEST_RSP, &Rsp);
 	__vmx_vmread(GUEST_RIP, &Rip);
-	DbgPrint("Debug:RSP = 0x%016llX RIP = 0x%016llX\n", Rsp, Rip);
+	DbgPrintEx(77, 0, "Debug:RSP = 0x%016llX RIP = 0x%016llX\r\n", Rsp, Rip);
 
 	__vmx_vmread(GUEST_CR0, &Cr0);
 	__vmx_vmread(GUEST_CR3, &Cr3);
 	__vmx_vmread(GUEST_CR4, &Cr4);
-	DbgPrint("Debug:CR0 = 0x%016llX CR3 = 0x%016llX CR4 = 0x%016llX\n", Cr0, Cr3, Cr4);
+	DbgPrintEx(77, 0, "Debug:CR0 = 0x%016llX CR3 = 0x%016llX CR4 = 0x%016llX\r\n", Cr0, Cr3, Cr4);
 
 	__vmx_vmread(GUEST_CS_SELECTOR, &Cs);
 	__vmx_vmread(GUEST_DS_SELECTOR, &Ds);
@@ -91,23 +91,23 @@ void ShowGuestRegister(ULONG_PTR* Registers)
 	__vmx_vmread(GUEST_GS_SELECTOR, &Gs);
 	__vmx_vmread(GUEST_TR_SELECTOR, &Tr);
 	__vmx_vmread(GUEST_LDTR_SELECTOR, &Ldtr);
-	DbgPrint("Debug:CS = 0x%016llX DS = 0x%016llX ES = 0x%016llX FS = 0x%016llX GS = 0x%016llX TR = 0x%016llX LDTR = 0x%016llX\n",
+	DbgPrintEx(77, 0, "Debug:CS = 0x%016llX DS = 0x%016llX ES = 0x%016llX FS = 0x%016llX GS = 0x%016llX TR = 0x%016llX LDTR = 0x%016llX\r\n",
 		Cs, Ds, Es, Fs, Gs, Tr, Ldtr);
 
 	__vmx_vmread(GUEST_GS_BASE, &GsBase);
 	__vmx_vmread(GUEST_IA32_DEBUGCTL, &DebugCtl);
 	__vmx_vmread(GUEST_DR7, &Dr7);
 	__vmx_vmread(GUEST_RFLAGS, &RFlags);
-	DbgPrint("Debug:GsBase = 0x%016llX DebugCtl = 0x%016llX Dr7 = 0x%016llX RFlags = 0x%016llX\n",
+	DbgPrintEx(77, 0, "Debug:GsBase = 0x%016llX DebugCtl = 0x%016llX Dr7 = 0x%016llX RFlags = 0x%016llX\r\n",
 		GsBase, DebugCtl, Dr7, RFlags);
 
 	__vmx_vmread(GUEST_IDTR_BASE, &IdtBase);
 	__vmx_vmread(GUEST_IDTR_LIMIT, &IdtLimit);
-	DbgPrint("Debug:IdtBase = 0x%016llX IdtLimit = 0x%016llX\n", IdtBase, IdtLimit);
+	DbgPrintEx(77, 0, "Debug:IdtBase = 0x%016llX IdtLimit = 0x%016llX\r\n", IdtBase, IdtLimit);
 
 	__vmx_vmread(GUEST_GDTR_BASE, &GdtBase);
 	__vmx_vmread(GUEST_GDTR_LIMIT, &GdtLimit);
-	DbgPrint("Debug:GdtBase = 0x%016llX GdtLimit = 0x%016llX\n", GdtBase, GdtLimit);
+	DbgPrintEx(77, 0, "Debug:GdtBase = 0x%016llX GdtLimit = 0x%016llX\r\n", GdtBase, GdtLimit);
 
 	return VOID();
 }
@@ -116,9 +116,96 @@ EXTERN_C VOID VMExitHandler(ULONG_PTR* Registers)
 {
 	ULONG_PTR GuestRIP = 0;
 	ULONG_PTR ExitInstructionLength = 0;
-	//ShowGuestRegister(Registers);
+	ULONG_PTR ExitReason;
+	ULONG_PTR GuestRFLAGS = 0;
+	ULONG_PTR MsrValue = 0;
+	ULONG_PTR ExitQualification = 0;
+	ULONG_PTR numCR = 0, opType = 0, accType = 0, reg = 0, cr3 = 0;
+
+
+	int CPUInfo[4];
+
 	VMREAD_ERR_RET(GUEST_RIP, &GuestRIP);
 	VMREAD_ERR_RET(VM_EXIT_INSTRUCTION_LEN, &ExitInstructionLength);
+	VMREAD_ERR_RET(VM_EXIT_REASON, &ExitReason);
+	VMREAD_ERR_RET(GUEST_RFLAGS, &GuestRFLAGS);
+	VMREAD_ERR_RET(EXIT_QUALIFICATION, &ExitQualification);
+
+
+	switch (ExitReason)
+	{
+	case VMX_EXIT_CPUID:
+		if (Registers[R_RAX] == 0x13371337)
+		{
+			ShowGuestRegister(Registers);
+			Registers[R_RBX] = 0x11111111;
+			Registers[R_RCX] = 0x22222222;
+			Registers[R_RDX] = 0x33333333;
+		}
+		else
+		{
+			__cpuidex(CPUInfo, Registers[R_RAX], Registers[R_RCX]);
+			Registers[R_RAX] = (ULONG_PTR)CPUInfo[0];
+			Registers[R_RBX] = (ULONG_PTR)CPUInfo[1];
+			Registers[R_RCX] = (ULONG_PTR)CPUInfo[2];
+			Registers[R_RDX] = (ULONG_PTR)CPUInfo[3];
+		}
+		break;
+	case VMX_EXIT_VMCALL:
+		break;
+	case VMX_EXIT_VMCLEAR: // Reject the operation of nested VMM instructions
+	case VMX_EXIT_VMLAUNCH:
+	case VMX_EXIT_VMPTRLD:
+	case VMX_EXIT_VMPTRST:
+	case VMX_EXIT_VMREAD:
+	case VMX_EXIT_VMWRITE:
+	case VMX_EXIT_VMRESUME:
+	case VMX_EXIT_VMXON:
+	case VMX_EXIT_VMXOFF:
+		VMWRITE_ERR_RET(GUEST_RFLAGS, GuestRFLAGS | 0x1);
+		break;
+	case VMX_EXIT_RDMSR:
+		MsrValue = __readmsr(Registers[R_RAX]);
+		Registers[R_RAX] = LODWORD(MsrValue);
+		Registers[R_RDX] = HIDWORD(MsrValue);
+ 		break;
+	case VMX_EXIT_WRMSR:
+		MsrValue = MAKEQWORD(Registers[R_RAX], Registers[R_RDX]);
+		__writemsr(Registers[R_RCX], MsrValue);
+		break;
+	case VMX_EXIT_MOV_CRX:
+		numCR = ExitQualification & 0b1111;
+		opType = (ExitQualification >> 6) & 1;
+		accType = (ExitQualification & 0b110000) >> 4;
+		reg = (ExitQualification >> 8) & 0b1111;
+		if (numCR == 3 && opType == 0)
+		{
+			if (accType == 1) // mov reg, cr3
+			{
+				VMREAD_ERR_RET(GUEST_CR3, &cr3);
+				Registers[reg] = cr3;
+			}
+			else if (accType == 0) // mov cr3, reg
+			{
+				cr3 = Registers[reg];
+				VMWRITE_ERR_RET(GUEST_CR3, cr3);
+			}
+		}
+
+		break;
+	case VMX_EXIT_XSETBV:
+		_xsetbv(Registers[R_RAX], MAKEQWORD(Registers[R_RAX], Registers[R_RDX]));
+		break;
+	case VMX_EXIT_INVD:
+		__wbinvd();
+		break;
+	case VMX_EXIT_XCPT_OR_NMI:
+		break;
+	default:
+		DbgPrintEx(77, 0, "Debug: Unknown VM_Exit reason: 0x%X\r\n", ExitReason);
+		break;
+	}
+
 
 	// more blah blah
 
