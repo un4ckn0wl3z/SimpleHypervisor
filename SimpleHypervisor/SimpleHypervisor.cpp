@@ -6,7 +6,7 @@
 
 #define ENABLE_EPT
 
-//#define ENABLE_OUTPU
+//#define ENABLE_OUTPUT
 
 #define VMERR_RET(x, s)\
 	if( (x) != 0 )\
@@ -15,7 +15,7 @@
 		return;\
 	}
 
-#ifdef  ENABLE_OUTPU
+#ifdef  ENABLE_OUTPUT
 #define VMWRITE_ERR_RET(e,v)\
 	DbgPrintEx(77,0,"Debug:%s------>0x%016llX\n", #e, v); \
 	VMERR_RET(vmxwrite(e,v),"vmwrite - " #e);
