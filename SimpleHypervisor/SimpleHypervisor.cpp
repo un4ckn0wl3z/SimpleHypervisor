@@ -6,7 +6,7 @@
 
 #define ENABLE_EPT
 
-#define ENABLE_OUTPU
+//#define ENABLE_OUTPU
 
 #define VMERR_RET(x, s)\
 	if( (x) != 0 )\
