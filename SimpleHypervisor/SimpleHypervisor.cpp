@@ -115,14 +115,16 @@ void ShowGuestRegister(ULONG_PTR* Registers)
 EXTERN_C VOID VMExitHandler(ULONG_PTR* Registers)
 {
 	ULONG_PTR GuestRIP = 0;
+	ULONG_PTR GuestRSP = 0;
 	ULONG_PTR ExitInstructionLength = 0;
-	ULONG_PTR ExitReason;
+	ULONG_PTR ExitReason = 0;
 	ULONG_PTR GuestRFLAGS = 0;
-	ULONG_PTR MsrValue = 0;
+	ULONGLONG MsrValue = 0;
 	ULONG_PTR ExitQualification = 0;
 	ULONG_PTR numCR = 0, opType = 0, accType = 0, reg = 0, cr3 = 0;
-
-
+	ULONG_PTR GuestVirt, GuestPhys;
+	ULONG_PTR IdtVector, IdtVectorErrCode;
+	ULONG_PTR InstructionInfo;
 	int CPUInfo[4];
 
 	VMREAD_ERR_RET(GUEST_RIP, &GuestRIP);
@@ -131,6 +133,15 @@ EXTERN_C VOID VMExitHandler(ULONG_PTR* Registers)
 	VMREAD_ERR_RET(GUEST_RFLAGS, &GuestRFLAGS);
 	VMREAD_ERR_RET(EXIT_QUALIFICATION, &ExitQualification);
 
+	VMREAD_ERR_RET(GUEST_RFLAGS, &GuestRFLAGS);
+	VMREAD_ERR_RET(GUEST_RSP, &GuestRSP);
+	VMREAD_ERR_RET(GUEST_CR3, &cr3);
+	VMREAD_ERR_RET(GUEST_GS_BASE, &reg);
+	VMREAD_ERR_RET(GUEST_LINEAR_ADDRESS, &GuestVirt);
+	VMREAD_ERR_RET(GUEST_PHYSICAL_ADDRESS, &GuestPhys);
+	VMREAD_ERR_RET(IDT_VECTORING_INFO, &IdtVector);
+	VMREAD_ERR_RET(IDT_VECTORING_ERROR_CODE, &IdtVectorErrCode);
+	VMREAD_ERR_RET(VMX_INSTRUCTION_INFO, &InstructionInfo);
 
 	switch (ExitReason)
 	{
@@ -153,7 +164,7 @@ EXTERN_C VOID VMExitHandler(ULONG_PTR* Registers)
 		break;
 	case VMX_EXIT_VMCALL:
 		break;
-	case VMX_EXIT_VMCLEAR: // Reject the operation of nested VMM instructions
+	case VMX_EXIT_VMCLEAR:   // Deny running nested VM instructions
 	case VMX_EXIT_VMLAUNCH:
 	case VMX_EXIT_VMPTRLD:
 	case VMX_EXIT_VMPTRST:
@@ -165,10 +176,10 @@ EXTERN_C VOID VMExitHandler(ULONG_PTR* Registers)
 		VMWRITE_ERR_RET(GUEST_RFLAGS, GuestRFLAGS | 0x1);
 		break;
 	case VMX_EXIT_RDMSR:
-		MsrValue = __readmsr(Registers[R_RAX]);
+		MsrValue = __readmsr(Registers[R_RCX]);
 		Registers[R_RAX] = LODWORD(MsrValue);
 		Registers[R_RDX] = HIDWORD(MsrValue);
- 		break;
+		break;
 	case VMX_EXIT_WRMSR:
 		MsrValue = MAKEQWORD(Registers[R_RAX], Registers[R_RDX]);
 		__writemsr(Registers[R_RCX], MsrValue);
@@ -180,21 +191,20 @@ EXTERN_C VOID VMExitHandler(ULONG_PTR* Registers)
 		reg = (ExitQualification >> 8) & 0b1111;
 		if (numCR == 3 && opType == 0)
 		{
-			if (accType == 1) // mov reg, cr3
+			if (accType == 1)  //mov reg,cr3
 			{
 				VMREAD_ERR_RET(GUEST_CR3, &cr3);
 				Registers[reg] = cr3;
 			}
-			else if (accType == 0) // mov cr3, reg
+			else if (accType == 0) //mov cr3,reg
 			{
 				cr3 = Registers[reg];
 				VMWRITE_ERR_RET(GUEST_CR3, cr3);
 			}
 		}
-
 		break;
 	case VMX_EXIT_XSETBV:
-		_xsetbv(Registers[R_RAX], MAKEQWORD(Registers[R_RAX], Registers[R_RDX]));
+		_xsetbv(Registers[R_RCX], MAKEQWORD(Registers[R_RAX], Registers[R_RDX]));
 		break;
 	case VMX_EXIT_INVD:
 		__wbinvd();
@@ -202,12 +212,9 @@ EXTERN_C VOID VMExitHandler(ULONG_PTR* Registers)
 	case VMX_EXIT_XCPT_OR_NMI:
 		break;
 	default:
-		DbgPrintEx(77, 0, "Debug: Unknown VM_Exit reason: 0x%X\r\n", ExitReason);
+		DbgPrint("Debug: Unknown VM_EIXT reason: 0x%X\r\n", ExitReason);
 		break;
 	}
-
-
-	// more blah blah
 
 	__vmx_vmwrite(GUEST_RIP, GuestRIP + ExitInstructionLength);
 
