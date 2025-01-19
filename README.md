@@ -61,7 +61,7 @@ The hypervisor captures and processes specific VMExit events, including but not 
 ## Credits
 
 This project was inspired by and builds upon the work of:
-- **扑克王 (I Love Code)**: [http://www.woaidaima.com](http://www.woaidaima.com ) / **[I Love Code's 51CTO]**: [edu.51cto.com](https://edu.51cto.com/course/14417.html)
+- **扑克王 (I Love Code)**: [http://www.woaidaima.com](http://www.woaidaima.com ) / **[I Love Code's 51CTO]**: [edu.51cto.com](https://edu.51cto.com/lecturer/13733346.html)
 - **NewBluePill_深入理解硬件虚拟机** by 于淼 and 戚正伟 (2011)
 
 ## Disclaimer
