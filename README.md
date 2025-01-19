@@ -64,6 +64,12 @@ This project was inspired by and builds upon the work of:
 - **扑克王 (I Love Code)**: [http://www.woaidaima.com](http://www.woaidaima.com ) / **[I Love Code's 51CTO]**: [edu.51cto.com](https://edu.51cto.com/lecturer/13733346.html)
 - **NewBluePill_深入理解硬件虚拟机** by 于淼 and 戚正伟 (2011)
 
+## Demo:
+https://youtu.be/PfZ-Tbojc4A
+
+## Articles
+https://blog.eavesdropper.dev/post/hypervisor-101/
+
 ## Disclaimer
 
 This project is for educational and research purposes only. The author is not responsible for any misuse or damage caused by the use of this software.
